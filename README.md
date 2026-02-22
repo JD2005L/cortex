@@ -139,7 +139,6 @@ OpenCortex's automated security scan may flag the following. These are **intenti
 ## Requirements
 
 - [OpenClaw](https://github.com/openclaw/openclaw) 2026.2.x+
-- Anthropic API key (for sonnet cron jobs)
 
 ## License
 
