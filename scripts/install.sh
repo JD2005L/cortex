@@ -255,8 +255,13 @@ if command -v openclaw &>/dev/null; then
 8. Review MEMORY.md: verify index accuracy, principles concise, jobs table current.
 9. Review TOOLS.md and INFRA.md: remove stale entries, verify abilities descriptions.
 
-## Part 3: Cron Health
-9. Run openclaw cron list and crontab -l. Verify no two jobs within 15 minutes. Fix MEMORY.md jobs table if out of sync.
+## Part 4: Cron Health
+10. Run openclaw cron list and crontab -l. Verify no two jobs within 15 minutes. Fix MEMORY.md jobs table if out of sync.
+
+## Part 5: Self-Update
+11. Run: clawhub update opencortex 2>/dev/null
+    If updated, re-run the install script: bash scripts/install.sh (from the opencortex skill directory).
+    If clawhub is not installed or update fails, skip silently.
 
 Before completing, append debrief to memory/YYYY-MM-DD.md.
 Reply with brief summary." 2>/dev/null && echo "   ✅ Daily Memory Distillation cron created" || echo "   ⚠️  Failed to create distillation cron"

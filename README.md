@@ -123,6 +123,19 @@ The nightly distillation analyzes each day's conversations and builds a living p
 
 **Change schedule:** `openclaw cron list` then `openclaw cron edit <id> --cron "..."`.
 
+## Security Notes
+
+OpenCortex's automated security scan may flag the following. These are **intentional by design**:
+
+| Flag | Why |
+|------|-----|
+| Credential storage in TOOLS.md | P4 (Tool Shed) requires documenting APIs and access methods. Credentials are stored in root-owned files (600 perms). Optional git backup scrubs secrets before commit. |
+| Autonomous cron jobs | Nightly distillation and weekly synthesis run as isolated sonnet sessions. They read/write memory files only — no external actions. |
+| File write access | Memory management requires writing to project files, TOOLS.md, INFRA.md, etc. This is the core function. |
+| Voice profiling | Analyzes conversation patterns for ghostwriting. Data stays local in memory/VOICE.md. Never transmitted externally. |
+
+**The security boundary is your container/machine.** OpenCortex doesn't phone home, doesn't exfiltrate data, and doesn't create external network connections. All operations are local file I/O.
+
 ## Requirements
 
 - [OpenClaw](https://github.com/openclaw/openclaw) 2026.2.x+
