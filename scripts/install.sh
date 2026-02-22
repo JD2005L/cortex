@@ -3,12 +3,24 @@
 # Idempotent: safe to re-run. Won't overwrite existing files.
 set -euo pipefail
 
-WORKSPACE="${CLAWD_WORKSPACE:-/root/clawd}"
+WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
 TZ="${CLAWD_TZ:-UTC}"
 
 echo "🧠 OpenCortex — Installing self-improving memory architecture"
 echo "   Workspace: $WORKSPACE"
 echo "   Timezone:  $TZ"
+echo ""
+
+# --- Feature Selection ---
+echo "Select optional features (all can be enabled later):"
+echo ""
+
+read -p "📝 Enable voice profiling? Analyzes conversation style for ghostwriting. (y/N): " ENABLE_VOICE
+ENABLE_VOICE=$(echo "$ENABLE_VOICE" | tr '[:upper:]' '[:lower:]')
+
+read -p "🔄 Enable self-update? Checks ClawHub for OpenCortex updates nightly. (y/N): " ENABLE_SELFUPDATE
+ENABLE_SELFUPDATE=$(echo "$ENABLE_SELFUPDATE" | tr '[:upper:]' '[:lower:]')
+
 echo ""
 
 # --- Directory Structure ---
@@ -108,7 +120,7 @@ Do not mentally note — commit to memory files. Update indexes after significan
 Emails, public posts, destructive ops — get confirmation first.
 
 ### P4: Tool Shed
-All tools, APIs, credentials, and capabilities SHALL be documented in TOOLS.md with goal-oriented abilities descriptions. When given a new tool during work, immediately add it.
+All tools, APIs, access methods, and capabilities SHALL be documented in TOOLS.md with goal-oriented abilities descriptions. When given a new tool during work, immediately add it.
 
 ### P5: Capture Decisions
 When the user makes a decision or states a preference, immediately record it in the relevant file with reasoning. Never re-ask something already decided. Format: **Decision:** [what] — [why] (date)
@@ -130,7 +142,7 @@ When something fails or the user corrects you, immediately append to the daily l
 
 ### Infrastructure
 - INFRA.md — Network, hosts, IPs, services
-- TOOLS.md — APIs, credentials, scripts, access methods
+- TOOLS.md — APIs, scripts, and access methods
 
 ### Projects (memory/projects/)
 | Project | Status | File |
@@ -149,7 +161,7 @@ memory/YYYY-MM-DD.md — Current daily log (distilled nightly)'
 
 create_if_missing "$WORKSPACE/TOOLS.md" '# TOOLS.md — Tool Shed
 
-Document every tool, API, credential, and script here with goal-oriented abilities descriptions (P4).
+Document every tool, API, and script here with goal-oriented abilities descriptions (P4).
 
 **Format:** What it is → How to access → What it can do (abilities)
 
@@ -193,7 +205,8 @@ On new session start:
 When delegating, always include in task message:
 "Before completing, append a brief debrief to memory/YYYY-MM-DD.md: what you did, what you learned, any issues."'
 
-create_if_missing "$WORKSPACE/memory/VOICE.md" '# VOICE.md — How My Human Communicates
+if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
+  create_if_missing "$WORKSPACE/memory/VOICE.md" '# VOICE.md — How My Human Communicates
 
 A living profile of communication style, vocabulary, and tone. Updated nightly by analyzing conversations. Used when ghostwriting on their behalf (community posts, emails, social media) — not for regular conversation.
 
@@ -213,6 +226,7 @@ A living profile of communication style, vocabulary, and tone. Updated nightly b
 
 ## What They Dislike
 (observations added nightly)'
+fi
 
 # --- Cron Jobs ---
 echo ""
@@ -223,6 +237,57 @@ if command -v openclaw &>/dev/null; then
   # Daily Memory Distillation
   EXISTING=$(openclaw cron list --json 2>/dev/null | grep -c "Memory Distillation" || true)
   if [ "$EXISTING" = "0" ]; then
+    # Build cron message dynamically based on feature selection
+    CRON_MSG="You are an AI assistant. Daily memory maintenance task."
+
+    # Self-update (opt-in)
+    if [ "$ENABLE_SELFUPDATE" = "y" ] || [ "$ENABLE_SELFUPDATE" = "yes" ]; then
+      CRON_MSG="$CRON_MSG
+
+## Part 0: Self-Update
+1. Run: clawhub update opencortex 2>/dev/null — if updated, note in daily log."
+    fi
+
+    CRON_MSG="$CRON_MSG
+
+## Part 1: Distillation
+1. Check memory/ for daily log files (YYYY-MM-DD.md, not in archive/).
+2. Distill ALL useful information into the right file:
+   - Project work → memory/projects/ (create new files if needed)
+   - New tools, APIs, access methods → TOOLS.md
+   - Infrastructure changes → INFRA.md
+   - Principles, lessons → MEMORY.md
+   - Scheduled jobs → MEMORY.md jobs table
+   - User preferences → USER.md
+3. Synthesize, do not copy. Extract decisions, architecture, lessons, issues, capabilities.
+4. Move distilled logs to memory/archive/
+5. Update MEMORY.md index if new files created."
+
+    # Voice profiling (opt-in)
+    if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
+      CRON_MSG="$CRON_MSG
+
+## Part 2: Voice Profile
+6. Read memory/VOICE.md. Review today conversations for new patterns:
+   - New vocabulary, slang, shorthand the user uses
+   - How they phrase requests, decisions, reactions
+   - Tone shifts in different contexts
+   Append new observations to VOICE.md. Do not duplicate existing entries."
+    fi
+
+    CRON_MSG="$CRON_MSG
+
+## Optimization
+- Review memory/projects/ for duplicates, stale info, verbose sections. Fix directly.
+- Review MEMORY.md: verify index accuracy, principles concise, jobs table current.
+- Review TOOLS.md and INFRA.md: remove stale entries, verify descriptions.
+
+## Cron Health
+- Run openclaw cron list and crontab -l. Verify no two jobs within 15 minutes. Fix MEMORY.md jobs table if out of sync.
+
+Before completing, append debrief to memory/YYYY-MM-DD.md.
+Reply with brief summary."
+
     openclaw cron add \
       --name "Daily Memory Distillation" \
       --cron "0 10 * * *" \
@@ -231,41 +296,7 @@ if command -v openclaw &>/dev/null; then
       --session "isolated" \
       --timeout-seconds 180 \
       --no-deliver \
-      --message "You are an AI assistant. Daily memory maintenance task.
-
-## Part 0: Self-Update
-1. Run: clawhub update opencortex 2>/dev/null — if updated, note in daily log.
-
-## Part 1: Distillation
-2. Check memory/ for daily log files (YYYY-MM-DD.md, not in archive/).
-2. Distill ALL useful information into the right file:
-   - Project work → memory/projects/ (create new files if needed)
-   - Tools, APIs, credentials → TOOLS.md
-   - Infrastructure changes → INFRA.md
-   - Principles, lessons → MEMORY.md
-   - Scheduled jobs → MEMORY.md jobs table
-   - User preferences → USER.md
-3. Synthesize, don't copy. Extract decisions, architecture, lessons, issues, capabilities.
-4. Move distilled logs to memory/archive/
-5. Update MEMORY.md index if new files created.
-
-## Part 2: Voice Profile
-6. Read memory/VOICE.md. Review today's conversations for new patterns:
-   - New vocabulary, slang, shorthand the user uses
-   - How they phrase requests, decisions, reactions
-   - Tone shifts in different contexts
-   Append new observations to VOICE.md. Don't duplicate existing entries.
-
-## Part 3: Optimization
-7. Review memory/projects/ for duplicates, stale info, verbose sections. Fix directly.
-8. Review MEMORY.md: verify index accuracy, principles concise, jobs table current.
-9. Review TOOLS.md and INFRA.md: remove stale entries, verify abilities descriptions.
-
-## Part 4: Cron Health
-10. Run openclaw cron list and crontab -l. Verify no two jobs within 15 minutes. Fix MEMORY.md jobs table if out of sync.
-
-Before completing, append debrief to memory/YYYY-MM-DD.md.
-Reply with brief summary." 2>/dev/null && echo "   ✅ Daily Memory Distillation cron created" || echo "   ⚠️  Failed to create distillation cron"
+      --message "$CRON_MSG" 2>/dev/null && echo "   ✅ Daily Memory Distillation cron created" || echo "   ⚠️  Failed to create distillation cron"
   else
     echo "   ⏭️  Daily Memory Distillation already exists"
   fi

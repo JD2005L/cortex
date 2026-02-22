@@ -1,5 +1,6 @@
 ---
 name: opencortex
+homepage: https://github.com/JD2005L/opencortex
 description: >
   Self-improving memory architecture for OpenClaw agents. Transforms the default flat memory
   into a structured, self-maintaining knowledge system that grows smarter over time.
@@ -51,7 +52,7 @@ After install, review and customize:
 SOUL.md          ← Identity, personality, boundaries
 AGENTS.md        ← Operating protocol, delegation rules
 MEMORY.md        ← Principles + memory index (< 3KB, loaded every session)
-TOOLS.md         ← Tool shed: APIs, credentials, scripts with abilities descriptions
+TOOLS.md         ← Tool shed: APIs, scripts, and access methods with abilities descriptions
 INFRA.md         ← Infrastructure atlas: hosts, IPs, services, network
 USER.md          ← Human's preferences, projects, communication style
 BOOTSTRAP.md     ← First-run checklist for new sessions
