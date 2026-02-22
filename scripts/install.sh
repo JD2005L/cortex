@@ -339,46 +339,18 @@ echo ""
 read -p "📦 Set up git backup with secret scrubbing? (y/N): " SETUP_GIT
 if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
 
-  create_if_missing "$WORKSPACE/scripts/git-scrub-secrets.sh" '#!/bin/bash
-SECRETS_FILE="'"$WORKSPACE"'/.secrets-map"
-WORKSPACE="'"$WORKSPACE"'"
-[ ! -f "$SECRETS_FILE" ] && exit 0
-while IFS="|" read -r secret placeholder; do
-  [ -z "$secret" ] && continue
-  [[ "$secret" =~ ^# ]] && continue
-  git -C "$WORKSPACE" ls-files "*.md" "*.sh" "*.json" "*.conf" "*.py" | while read -r file; do
-    filepath="$WORKSPACE/$file"
-    grep -q "$secret" "$filepath" 2>/dev/null && sed -i "s|$secret|$placeholder|g" "$filepath"
+  # Copy bundled scripts (inspectable in the skill package)
+  SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+  for script in git-backup.sh git-scrub-secrets.sh git-restore-secrets.sh; do
+    if [ -f "$SKILL_DIR/$script" ]; then
+      cp "$SKILL_DIR/$script" "$WORKSPACE/scripts/$script"
+      echo "   📋 Copied $script"
+    fi
   done
-done < "$SECRETS_FILE"'
 
-  create_if_missing "$WORKSPACE/scripts/git-restore-secrets.sh" '#!/bin/bash
-SECRETS_FILE="'"$WORKSPACE"'/.secrets-map"
-WORKSPACE="'"$WORKSPACE"'"
-[ ! -f "$SECRETS_FILE" ] && exit 0
-while IFS="|" read -r secret placeholder; do
-  [ -z "$secret" ] && continue
-  [[ "$secret" =~ ^# ]] && continue
-  git -C "$WORKSPACE" ls-files "*.md" "*.sh" "*.json" "*.conf" "*.py" | while read -r file; do
-    filepath="$WORKSPACE/$file"
-    grep -q "$placeholder" "$filepath" 2>/dev/null && sed -i "s|$placeholder|$secret|g" "$filepath"
-  done
-done < "$SECRETS_FILE"'
-
-  create_if_missing "$WORKSPACE/scripts/git-backup.sh" '#!/bin/bash
-cd '"$WORKSPACE"' || exit 1
-if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
-  exit 0
-fi
-'"$WORKSPACE"'/scripts/git-scrub-secrets.sh
-git add -A
-git commit -m "Auto-backup: $(date '"'"'+%Y-%m-%d %H:%M'"'"')" --quiet
-git push --quiet 2>/dev/null
-'"$WORKSPACE"'/scripts/git-restore-secrets.sh'
-
-  chmod +x "$WORKSPACE/scripts/git-scrub-secrets.sh"
-  chmod +x "$WORKSPACE/scripts/git-restore-secrets.sh"
-  chmod +x "$WORKSPACE/scripts/git-backup.sh"
+  chmod +x "$WORKSPACE/scripts/git-scrub-secrets.sh" 2>/dev/null
+  chmod +x "$WORKSPACE/scripts/git-restore-secrets.sh" 2>/dev/null
+  chmod +x "$WORKSPACE/scripts/git-backup.sh" 2>/dev/null
 
   create_if_missing "$WORKSPACE/.secrets-map" '# Secrets map: SECRET_VALUE|{{PLACEHOLDER}}
 # Add your secrets here. This file is gitignored.

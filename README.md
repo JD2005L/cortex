@@ -128,11 +128,11 @@ The nightly distillation analyzes each day's conversations and builds a living p
 
 ### 1. No Required Environment Variables or API Keys
 
-OpenCortex does not require or reference any API keys, tokens, or environment variables. Cron jobs specify `--model "sonnet"` which is resolved by your OpenClaw gateway using whatever model provider you've already configured. **OpenCortex has zero knowledge of your API credentials.**
+OpenCortex does not require or reference any API keys, tokens, or environment variables. Cron jobs specify `--model "sonnet"` which is resolved by your OpenClaw gateway using whatever model provider you've already configured. **OpenCortex has zero knowledge of your API keys.**
 
-### 2. Credential Handling in TOOLS.md
+### 2. Tool Documentation in TOOLS.md
 
-The P4 (Tool Shed) principle instructs the *agent* to document tools and access methods. **OpenCortex itself never writes credentials into any file.** The agent, during normal conversation with you, may document tools you give it — that's the agent's behavior, not the skill's. If you prefer metadata-only documentation (e.g., "Database: see env var $DB_PASS"), instruct your agent accordingly.
+The P4 (Tool Shed) principle instructs the *agent* to document tools and access methods. **OpenCortex itself never writes sensitive data into any file.** The agent, during normal conversation with you, may document tools you provide — that's the agent's behavior, not the skill's. If you prefer metadata-only documentation (e.g., "Database: see env var $DB_PASS"), instruct your agent accordingly.
 
 ### 3. Git Backup & Secret Scrubbing (Optional, Off by Default)
 
@@ -150,7 +150,7 @@ Git backup is **opt-in** — the installer asks before creating any backup scrip
 
 ### 4. Workspace & Privileges
 
-The installer defaults to `CLAWD_WORKSPACE` env var, falling back to `/root/clawd`. To install in a non-root location:
+The installer defaults to the current working directory (`CLAWD_WORKSPACE` env var). To install in a non-root location:
 
 ```bash
 CLAWD_WORKSPACE=/home/myuser/agent bash scripts/install.sh
