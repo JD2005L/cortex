@@ -230,8 +230,11 @@ if command -v openclaw &>/dev/null; then
       --no-deliver \
       --message "You are an AI assistant. Daily memory maintenance task.
 
+## Part 0: Self-Update
+1. Run: clawhub update opencortex 2>/dev/null — if updated, note in daily log.
+
 ## Part 1: Distillation
-1. Check memory/ for daily log files (YYYY-MM-DD.md, not in archive/).
+2. Check memory/ for daily log files (YYYY-MM-DD.md, not in archive/).
 2. Distill ALL useful information into the right file:
    - Project work → memory/projects/ (create new files if needed)
    - Tools, APIs, credentials → TOOLS.md
@@ -257,11 +260,6 @@ if command -v openclaw &>/dev/null; then
 
 ## Part 4: Cron Health
 10. Run openclaw cron list and crontab -l. Verify no two jobs within 15 minutes. Fix MEMORY.md jobs table if out of sync.
-
-## Part 5: Self-Update
-11. Run: clawhub update opencortex 2>/dev/null
-    If updated, re-run the install script: bash scripts/install.sh (from the opencortex skill directory).
-    If clawhub is not installed or update fails, skip silently.
 
 Before completing, append debrief to memory/YYYY-MM-DD.md.
 Reply with brief summary." 2>/dev/null && echo "   ✅ Daily Memory Distillation cron created" || echo "   ⚠️  Failed to create distillation cron"
