@@ -116,6 +116,9 @@ When the user makes a decision or states a preference, immediately record it in 
 ### P6: Sub-agent Debrief
 Sub-agents MUST write a brief debrief to memory/YYYY-MM-DD.md before completing. Include: what was done, what was learned, any issues.
 
+### P7: Log Failures
+When something fails or the user corrects you, immediately append to the daily log with ❌ FAILURE: or 🔧 CORRECTION: tags. Include: what happened, why it failed, what fixed it. Nightly distillation routes these to the right file.
+
 ---
 
 ## Identity

@@ -101,6 +101,7 @@ The installer is idempotent — safe to re-run. It won't overwrite existing file
 | P4 | Tool Shed | Document every capability with abilities description |
 | P5 | Capture Decisions | Record decisions with reasoning, never re-ask |
 | P6 | Sub-agent Debrief | Delegated work feeds learnings back to daily log |
+| P7 | Log Failures | Tag failures/corrections with ❌/🔧 for distillation routing |
 
 ### Voice Profile (`memory/VOICE.md`)
 The nightly distillation analyzes each day's conversations and builds a living profile of how your human communicates — vocabulary, tone, phrasing, decision style. Used when ghostwriting on their behalf (community posts, emails, social media). Not used for regular agent conversation.

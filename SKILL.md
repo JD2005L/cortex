@@ -73,6 +73,7 @@ memory/
 | P4 | Tool Shed | Document every tool/API with goal-oriented abilities description |
 | P5 | Capture Decisions | Record decisions with reasoning; never re-ask |
 | P6 | Sub-agent Debrief | Sub-agents write learnings to daily log before completing |
+| P7 | Log Failures | Tag failures/corrections in daily log for distillation routing |
 
 ## Cron Jobs (installed)
 
