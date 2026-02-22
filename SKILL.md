@@ -20,7 +20,8 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 2. **Installs nightly maintenance** that distills daily work into permanent knowledge
 3. **Installs weekly synthesis** that catches patterns across days
 4. **Establishes principles** that enforce good memory habits
-5. **Enables safe git backup** with automatic secret scrubbing
+5. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting
+6. **Enables safe git backup** with automatic secret scrubbing
 
 ## Installation
 
@@ -35,6 +36,8 @@ The script will:
 - Create directory structure
 - Set up cron jobs (daily distillation, weekly synthesis)
 - Optionally set up git backup with secret scrubbing
+
+The installer also creates `memory/VOICE.md` — a living profile of how your human communicates. The nightly distillation analyzes each day's conversations and builds up vocabulary, tone, phrasing patterns, and decision style. Use this when ghostwriting on their behalf (community posts, emails, social media) — not for regular conversation.
 
 After install, review and customize:
 - `SOUL.md` — personality and identity (make it yours)

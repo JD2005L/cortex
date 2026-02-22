@@ -18,6 +18,7 @@ Cortex transforms your agent into one that **gets smarter every day** through:
 - **Nightly distillation** — Daily work automatically distilled into permanent knowledge
 - **Weekly synthesis** — Pattern detection across days catches recurring problems and unfinished threads
 - **Enforced principles** — Habits that prevent knowledge loss (decision capture, tool documentation, sub-agent debriefs)
+- **Voice profiling** — Learns how your human communicates for authentic ghostwriting
 - **Safe git backup** — Automatic secret scrubbing so credentials never hit your repo
 
 ## Architecture
@@ -100,6 +101,9 @@ The installer is idempotent — safe to re-run. It won't overwrite existing file
 | P4 | Tool Shed | Document every capability with abilities description |
 | P5 | Capture Decisions | Record decisions with reasoning, never re-ask |
 | P6 | Sub-agent Debrief | Delegated work feeds learnings back to daily log |
+
+### Voice Profile (`memory/VOICE.md`)
+The nightly distillation analyzes each day's conversations and builds a living profile of how your human communicates — vocabulary, tone, phrasing, decision style. Used when ghostwriting on their behalf (community posts, emails, social media). Not used for regular agent conversation.
 
 ### Optional: Git Backup with Secret Scrubbing
 - Auto-commit every 6 hours

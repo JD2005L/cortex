@@ -190,6 +190,27 @@ On new session start:
 When delegating, always include in task message:
 "Before completing, append a brief debrief to memory/YYYY-MM-DD.md: what you did, what you learned, any issues."'
 
+create_if_missing "$WORKSPACE/memory/VOICE.md" '# VOICE.md — How My Human Communicates
+
+A living profile of communication style, vocabulary, and tone. Updated nightly by analyzing conversations. Used when ghostwriting on their behalf (community posts, emails, social media) — not for regular conversation.
+
+---
+
+## Tone
+(observations added nightly)
+
+## Vocabulary
+(observations added nightly)
+
+## Decision Style
+(observations added nightly)
+
+## Sentence Structure
+(observations added nightly)
+
+## What They Dislike
+(observations added nightly)'
+
 # --- Cron Jobs ---
 echo ""
 echo "⏰ Setting up cron jobs..."
@@ -222,10 +243,17 @@ if command -v openclaw &>/dev/null; then
 4. Move distilled logs to memory/archive/
 5. Update MEMORY.md index if new files created.
 
-## Part 2: Optimization
-6. Review memory/projects/ for duplicates, stale info, verbose sections. Fix directly.
-7. Review MEMORY.md: verify index accuracy, principles concise, jobs table current.
-8. Review TOOLS.md and INFRA.md: remove stale entries, verify abilities descriptions.
+## Part 2: Voice Profile
+6. Read memory/VOICE.md. Review today's conversations for new patterns:
+   - New vocabulary, slang, shorthand the user uses
+   - How they phrase requests, decisions, reactions
+   - Tone shifts in different contexts
+   Append new observations to VOICE.md. Don't duplicate existing entries.
+
+## Part 3: Optimization
+7. Review memory/projects/ for duplicates, stale info, verbose sections. Fix directly.
+8. Review MEMORY.md: verify index accuracy, principles concise, jobs table current.
+9. Review TOOLS.md and INFRA.md: remove stale entries, verify abilities descriptions.
 
 ## Part 3: Cron Health
 9. Run openclaw cron list and crontab -l. Verify no two jobs within 15 minutes. Fix MEMORY.md jobs table if out of sync.
