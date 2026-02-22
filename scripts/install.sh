@@ -1,12 +1,12 @@
 #!/bin/bash
-# Cortex — Self-Improving Memory Architecture Installer
+# OpenCortex — Self-Improving Memory Architecture Installer
 # Idempotent: safe to re-run. Won't overwrite existing files.
 set -euo pipefail
 
 WORKSPACE="${CLAWD_WORKSPACE:-/root/clawd}"
 TZ="${CLAWD_TZ:-UTC}"
 
-echo "🧠 Cortex — Installing self-improving memory architecture"
+echo "🧠 OpenCortex — Installing self-improving memory architecture"
 echo "   Workspace: $WORKSPACE"
 echo "   Timezone:  $TZ"
 echo ""
@@ -371,7 +371,7 @@ fi
 
 # --- Done ---
 echo ""
-echo "🧠 Cortex installed successfully!"
+echo "🧠 OpenCortex installed successfully!"
 echo ""
 echo "Next steps:"
 echo "  1. Edit SOUL.md — make it yours"

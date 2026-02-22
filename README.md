@@ -1,4 +1,4 @@
-# 🧠 Cortex
+# 🧠 OpenCortex
 
 **Self-improving memory architecture for [OpenClaw](https://github.com/openclaw/openclaw) agents.**
 
@@ -12,7 +12,7 @@ Out of the box, OpenClaw agents dump everything into a flat `MEMORY.md`. Context
 
 ## The Solution
 
-Cortex transforms your agent into one that **gets smarter every day** through:
+OpenCortex transforms your agent into one that **gets smarter every day** through:
 
 - **Structured memory** — Purpose-specific files instead of one flat dump
 - **Nightly distillation** — Daily work automatically distilled into permanent knowledge
@@ -59,7 +59,7 @@ openclaw skill install cortex.skill
 
 ### Option 2: From source
 ```bash
-git clone https://github.com/JD2005L/cortex.git
+git clone https://github.com/JD2005L/opencortex.git
 cd cortex
 bash scripts/install.sh
 ```

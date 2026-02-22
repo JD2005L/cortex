@@ -1,8 +1,8 @@
-# Cortex Architecture Reference
+# OpenCortex Architecture Reference
 
 ## Why This Exists
 
-Default OpenClaw memory is a flat MEMORY.md that grows unbounded. Context fills up, compaction loses information, the agent forgets what it learned. Cortex solves this with:
+Default OpenClaw memory is a flat MEMORY.md that grows unbounded. Context fills up, compaction loses information, the agent forgets what it learned. OpenCortex solves this with:
 
 1. **Separation of concerns** — different files for different purposes
 2. **Nightly distillation** — raw daily logs → permanent structured knowledge
@@ -63,7 +63,7 @@ Edit MEMORY.md P1 to adjust which model handles what complexity.
 Append to MEMORY.md 🔴 PRINCIPLES. Keep each principle to 1-2 sentences.
 
 ### Multi-bot setups
-Each bot gets its own Cortex install. Share knowledge via:
+Each bot gets its own OpenCortex install. Share knowledge via:
 - Common git repo (read-only for non-primary bots)
 - SSH-based management (primary bot propagates changes)
 - Shared NFS/SMB mount for common reference docs

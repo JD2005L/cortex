@@ -1,5 +1,5 @@
 ---
-name: cortex
+name: opencortex
 description: >
   Self-improving memory architecture for OpenClaw agents. Transforms the default flat memory
   into a structured, self-maintaining knowledge system that grows smarter over time.
@@ -10,7 +10,7 @@ description: >
   "self-improving", "cortex", "bootstrap memory", "memory optimization".
 ---
 
-# Cortex — Self-Improving Memory Architecture
+# OpenCortex — Self-Improving Memory Architecture
 
 Transform a default OpenClaw agent into one that compounds knowledge daily.
 
