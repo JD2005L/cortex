@@ -123,18 +123,73 @@ The nightly distillation analyzes each day's conversations and builds a living p
 
 **Change schedule:** `openclaw cron list` then `openclaw cron edit <id> --cron "..."`.
 
-## Security Notes
+## Security & Transparency
 
-OpenCortex's automated security scan may flag the following. These are **intentional by design**:
+### 1. No Required Environment Variables or API Keys
 
-| Flag | Why |
-|------|-----|
-| Credential storage in TOOLS.md | P4 (Tool Shed) requires documenting APIs and access methods. Credentials are stored in root-owned files (600 perms). Optional git backup scrubs secrets before commit. |
-| Autonomous cron jobs | Nightly distillation and weekly synthesis run as isolated sonnet sessions. They read/write memory files only — no external actions. |
-| File write access | Memory management requires writing to project files, TOOLS.md, INFRA.md, etc. This is the core function. |
-| Voice profiling | Analyzes conversation patterns for ghostwriting. Data stays local in memory/VOICE.md. Never transmitted externally. |
+OpenCortex does not require or reference any API keys, tokens, or environment variables. Cron jobs specify `--model "sonnet"` which is resolved by your OpenClaw gateway using whatever model provider you've already configured. **OpenCortex has zero knowledge of your API credentials.**
 
-**The security boundary is your container/machine.** OpenCortex doesn't phone home, doesn't exfiltrate data, and doesn't create external network connections. All operations are local file I/O.
+### 2. Credential Handling in TOOLS.md
+
+The P4 (Tool Shed) principle instructs the *agent* to document tools and access methods. **OpenCortex itself never writes credentials into any file.** The agent, during normal conversation with you, may document tools you give it — that's the agent's behavior, not the skill's. If you prefer metadata-only documentation (e.g., "Database: see env var $DB_PASS"), instruct your agent accordingly.
+
+### 3. Git Backup & Secret Scrubbing (Optional, Off by Default)
+
+Git backup is **opt-in** — the installer asks before creating any backup scripts. If enabled:
+
+- `.secrets-map` defines `secret|{{PLACEHOLDER}}` pairs (you write this manually)
+- `git-scrub-secrets.sh` replaces all secrets with placeholders via `sed` before commit
+- `git-restore-secrets.sh` reverses the replacements after push
+- `git-backup.sh` calls scrub → `git add -A` → commit → push → restore
+- `.secrets-map` is gitignored with 600 permissions
+
+**No scrubbing happens unless you populate `.secrets-map`.** The scripts contain no network calls, no external endpoints, no telemetry. They are pure `sed` + `git` operations. [Read them in full](scripts/).
+
+**Recommendation:** Test in a throwaway repo before pointing at a real remote. Run `git-scrub-secrets.sh` then inspect `git diff` to verify scrubbing works before your first push.
+
+### 4. Workspace & Privileges
+
+The installer defaults to `CLAWD_WORKSPACE` env var, falling back to `/root/clawd`. To install in a non-root location:
+
+```bash
+CLAWD_WORKSPACE=/home/myuser/agent bash scripts/install.sh
+```
+
+All file operations are confined to the workspace directory. No system-wide changes are made outside of cron job registration.
+
+### 5. Autonomous Cron Jobs
+
+Two cron jobs are created (both run as isolated OpenClaw sessions):
+
+| Job | What it reads | What it writes | Network access |
+|-----|--------------|----------------|----------------|
+| Daily Distillation | `memory/*.md`, workspace `*.md` | `memory/projects/`, `MEMORY.md`, `TOOLS.md`, `INFRA.md`, `USER.md`, `memory/VOICE.md` | `clawhub update opencortex` only (self-update check, can be removed) |
+| Weekly Synthesis | `memory/archive/*.md`, `memory/projects/*.md` | `memory/archive/weekly-*.md`, project files | None |
+
+Cron jobs **do not** make external API calls, send emails, post to services, or access anything outside the workspace — with one exception: the optional `clawhub update opencortex` self-update check. Remove that line from the cron if you want fully air-gapped operation.
+
+### 6. Voice Profiling (Optional)
+
+`memory/VOICE.md` is created as an empty template. The nightly distillation *suggests* analyzing conversation patterns — but this only works if your OpenClaw instance stores conversation logs in the workspace. **No conversation data is transmitted externally.** All analysis stays in local files.
+
+To disable voice profiling: delete `memory/VOICE.md` and remove Part 2 from the distillation cron (`openclaw cron edit <id>`).
+
+### 7. No Hidden Endpoints
+
+OpenCortex contains **zero network operations** beyond the optional `clawhub update` call. No telemetry, no phone-home, no external uploads. Every script is plain bash with `sed`, `git`, `grep`, and `find`. [Full source is public](https://github.com/JD2005L/opencortex).
+
+### Summary
+
+| Concern | Status |
+|---------|--------|
+| Required API keys/env vars | **None.** Model access handled by OpenClaw gateway. |
+| Raw secrets in TOOLS.md | **Not by the skill.** Agent behavior, controllable by user instruction. |
+| Git scrubbing reliability | **Opt-in, manual .secrets-map, auditable scripts.** Test before use. |
+| Root workspace default | **Configurable via `CLAWD_WORKSPACE`.** |
+| Autonomous file writes | **Workspace-only.** No system files touched. |
+| Voice profiling privacy | **Optional, local-only, removable.** |
+| Network access | **None** except optional self-update. Removable. |
+| Hidden endpoints | **None.** Full source public and auditable. |
 
 ## Requirements
 
