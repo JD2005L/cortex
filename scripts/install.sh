@@ -330,49 +330,15 @@ echo ""
 read -p "📦 Set up git backup with secret scrubbing? (y/N): " SETUP_GIT
 if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
 
-  # Generate git helper scripts in the workspace
-  # These scripts use only sed and git — no network calls, no external dependencies
-  # Source templates documented at: https://github.com/JD2005L/opencortex#git-backup
-
-  echo '#!/bin/bash
-# Scrub secrets before git commit. Reads .secrets-map (SECRET|PLACEHOLDER per line).
-WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
-SECRETS_FILE="$WORKSPACE/.secrets-map"
-[ ! -f "$SECRETS_FILE" ] && exit 0
-while IFS="|" read -r secret placeholder; do
-  [ -z "$secret" ] && continue; [[ "$secret" =~ ^# ]] && continue
-  git -C "$WORKSPACE" ls-files "*.md" "*.sh" "*.json" "*.conf" "*.py" | while read -r file; do
-    grep -q "$secret" "$WORKSPACE/$file" 2>/dev/null && sed -i "s|$secret|$placeholder|g" "$WORKSPACE/$file"
+  # Copy bundled scripts (fully inspectable in the skill package)
+  SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+  for script in git-backup.sh git-scrub-secrets.sh git-restore-secrets.sh; do
+    if [ -f "$SKILL_DIR/$script" ]; then
+      cp "$SKILL_DIR/$script" "$WORKSPACE/scripts/$script"
+      chmod +x "$WORKSPACE/scripts/$script"
+      echo "   📋 Copied $script"
+    fi
   done
-done < "$SECRETS_FILE"' > "$WORKSPACE/scripts/git-scrub-secrets.sh"
-
-  echo '#!/bin/bash
-# Restore secrets after git push. Reverses git-scrub-secrets.sh.
-WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
-SECRETS_FILE="$WORKSPACE/.secrets-map"
-[ ! -f "$SECRETS_FILE" ] && exit 0
-while IFS="|" read -r secret placeholder; do
-  [ -z "$secret" ] && continue; [[ "$secret" =~ ^# ]] && continue
-  git -C "$WORKSPACE" ls-files "*.md" "*.sh" "*.json" "*.conf" "*.py" | while read -r file; do
-    grep -q "$placeholder" "$WORKSPACE/$file" 2>/dev/null && sed -i "s|$placeholder|$secret|g" "$WORKSPACE/$file"
-  done
-done < "$SECRETS_FILE"' > "$WORKSPACE/scripts/git-restore-secrets.sh"
-
-  echo '#!/bin/bash
-# Auto-commit and push workspace. Scrubs secrets before commit, restores after.
-WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$WORKSPACE" || exit 1
-if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then exit 0; fi
-"$WORKSPACE/scripts/git-scrub-secrets.sh"
-git add -A
-git commit -m "Auto-backup: $(date "+%Y-%m-%d %H:%M")" --quiet
-git push --quiet 2>/dev/null
-"$WORKSPACE/scripts/git-restore-secrets.sh"' > "$WORKSPACE/scripts/git-backup.sh"
-
-  chmod +x "$WORKSPACE/scripts/git-scrub-secrets.sh"
-  chmod +x "$WORKSPACE/scripts/git-restore-secrets.sh"
-  chmod +x "$WORKSPACE/scripts/git-backup.sh"
-  echo "   ✅ Git helper scripts created (inspect them in $WORKSPACE/scripts/)"
 
   create_if_missing "$WORKSPACE/.secrets-map" '# Secrets map: SECRET_VALUE|{{PLACEHOLDER}}
 # Add your secrets here. This file is gitignored.
