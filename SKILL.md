@@ -1,5 +1,5 @@
 ---
-name: opencortex
+name: OpenCortex
 homepage: https://github.com/JD2005L/opencortex
 description: >
   Self-improving memory architecture for OpenClaw agents. Transforms the default flat memory

@@ -142,6 +142,7 @@ Emails, public posts, destructive ops — get confirmation first.
 
 ### P4: Tool Shed
 All tools, APIs, access methods, and capabilities SHALL be documented in TOOLS.md with goal-oriented abilities descriptions. When given a new tool during work, immediately add it.
+**Enforcement:** After using any CLI tool, API, or service — before ending the task — verify it exists in TOOLS.md. If not, add it immediately. Do not defer to distillation.
 
 ### P5: Capture Decisions
 When the user makes a decision or states a preference, immediately record it in the relevant file with reasoning. Never re-ask something already decided. Format: **Decision:** [what] — [why] (date)
@@ -334,6 +335,9 @@ if command -v openclaw &>/dev/null; then
 - Review memory/projects/ for duplicates, stale info, verbose sections. Fix directly.
 - Review MEMORY.md: verify index accuracy, principles concise, jobs table current.
 - Review TOOLS.md and INFRA.md: remove stale entries, verify descriptions.
+
+## Tool Shed Audit (P4 Enforcement)
+- Read TOOLS.md. Scan today daily logs and archived conversation for any CLI tools, APIs, or services that were USED but are NOT documented in TOOLS.md. Add missing entries with: what it is, how to access it, what it can do. This catches tools that slipped through real-time P4 enforcement.
 
 ## Cron Health
 - Run openclaw cron list and crontab -l. Verify no two jobs within 15 minutes. Fix MEMORY.md jobs table if out of sync.
