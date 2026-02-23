@@ -54,13 +54,13 @@ The key: **daily distillation + weekly synthesis + decision capture** means the 
 
 ### Option 1: OpenClaw Skill
 ```bash
-openclaw skill install cortex.skill
+openclaw skill install opencortex.skill
 ```
 
 ### Option 2: From source
 ```bash
 git clone https://github.com/JD2005L/opencortex.git
-cd cortex
+cd opencortex
 bash scripts/install.sh
 ```
 
