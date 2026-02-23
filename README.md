@@ -18,6 +18,7 @@ OpenCortex transforms your agent into one that **gets smarter every day** throug
 - **Nightly distillation** — Daily work automatically distilled into permanent knowledge
 - **Weekly synthesis** — Pattern detection across days catches recurring problems and unfinished threads
 - **Enforced principles** — Habits that prevent knowledge loss (decision capture, tool documentation, sub-agent debriefs)
+- **Encrypted vault** — AES-256 encrypted secret storage with key-only references in docs
 - **Voice profiling** — Learns how your human communicates for authentic ghostwriting
 - **Safe git backup** — Automatic secret scrubbing so credentials never hit your repo
 
@@ -223,7 +224,7 @@ OpenCortex contains **zero network operations**. No telemetry, no phone-home, no
 | Concern | Status |
 |---------|--------|
 | Required API keys/env vars | **None.** Model access handled by OpenClaw gateway. |
-| Raw secrets in TOOLS.md | **Not by the skill.** Agent behavior, controllable by user instruction. |
+| Raw secrets in TOOLS.md | **Prevented in secure mode.** Vault stores encrypted values, TOOLS.md gets `vault:<key>` references only. |
 | Git scrubbing reliability | **Opt-in, manual .secrets-map, auditable scripts.** Test before use. |
 | Root workspace default | **Configurable via `CLAWD_WORKSPACE`.** |
 | Autonomous file writes | **Workspace-only.** No system files touched. |

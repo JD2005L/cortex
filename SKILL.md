@@ -22,7 +22,8 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 3. **Installs weekly synthesis** that catches patterns across days
 4. **Establishes principles** that enforce good memory habits
 5. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting
-6. **Enables safe git backup** with automatic secret scrubbing
+6. **Encrypts sensitive data** in an AES-256 vault with key-only references in docs
+7. **Enables safe git backup** with automatic secret scrubbing
 
 ## Installation
 

@@ -33,7 +33,7 @@ The nightly cron reads daily logs and routes each piece of information:
 | Information type | Destination |
 |-----------------|-------------|
 | Project work, features, bugs | memory/projects/{project}.md |
-| New tools, APIs, access info | TOOLS.md |
+| New tool descriptions and capabilities | TOOLS.md (sensitive values → vault) |
 | Infrastructure changes | INFRA.md |
 | New principles, lessons | MEMORY.md |
 | User preferences, decisions | USER.md or relevant project file |

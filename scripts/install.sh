@@ -12,8 +12,14 @@ echo "   Timezone:  $TZ"
 echo ""
 
 # --- Feature Selection ---
-echo "Select optional features (all can be enabled later):"
+echo "Select features:"
 echo ""
+
+echo "🔒 Secret storage mode:"
+echo "   secure = Sensitive values encrypted in vault, referenced by key in docs"
+echo "   direct = Agent documents everything in plain workspace files"
+read -p "   Choose (secure/direct) [secure]: " SECRET_MODE
+SECRET_MODE=$(echo "${SECRET_MODE:-secure}" | tr '[:upper:]' '[:lower:]')
 
 read -p "📝 Enable voice profiling? Analyzes conversation style for ghostwriting. (y/N): " ENABLE_VOICE
 ENABLE_VOICE=$(echo "$ENABLE_VOICE" | tr '[:upper:]' '[:lower:]')
@@ -227,6 +233,28 @@ A living profile of communication style, vocabulary, and tone. Updated nightly b
 (observations added nightly)'
 fi
 
+# --- Vault Setup ---
+if [ "$SECRET_MODE" = "secure" ]; then
+  SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+  if [ -f "$SKILL_DIR/vault.sh" ]; then
+    cp "$SKILL_DIR/vault.sh" "$WORKSPACE/scripts/vault.sh"
+    chmod +x "$WORKSPACE/scripts/vault.sh"
+    echo "   📋 Copied vault.sh"
+  fi
+  
+  "$WORKSPACE/scripts/vault.sh" init 2>/dev/null || true
+  
+  # Add vault to gitignore
+  if [ -f "$WORKSPACE/.gitignore" ]; then
+    grep -q ".vault" "$WORKSPACE/.gitignore" || echo ".vault/" >> "$WORKSPACE/.gitignore"
+  else
+    echo ".vault/" > "$WORKSPACE/.gitignore"
+  fi
+  
+  echo "   ✅ Vault initialized — store secrets with: scripts/vault.sh set <key> <value>"
+  echo "   📖 Reference in TOOLS.md as: password: vault:key_name"
+fi
+
 # --- Cron Jobs ---
 echo ""
 echo "⏰ Setting up cron jobs..."
@@ -239,7 +267,24 @@ if command -v openclaw &>/dev/null; then
     # Build cron message dynamically based on feature selection
     CRON_MSG="You are an AI assistant. Daily memory maintenance task."
 
-    CRON_MSG="$CRON_MSG
+    if [ "$SECRET_MODE" = "secure" ]; then
+      CRON_MSG="$CRON_MSG
+
+## Part 1: Distillation
+1. Check memory/ for daily log files (YYYY-MM-DD.md, not in archive/).
+2. Distill ALL useful information into the right file:
+   - Project work → memory/projects/ (create new files if needed)
+   - New tool descriptions and capabilities → TOOLS.md (names, URLs, what they do)
+   - IMPORTANT: Never write passwords, tokens, or secrets into any file. For sensitive values, instruct the user to run: scripts/vault.sh set <key> <value>. Reference in docs as: vault:<key>
+   - Infrastructure changes → INFRA.md
+   - Principles, lessons → MEMORY.md
+   - Scheduled jobs → MEMORY.md jobs table
+   - User preferences → USER.md
+3. Synthesize, do not copy. Extract decisions, architecture, lessons, issues, capabilities.
+4. Move distilled logs to memory/archive/
+5. Update MEMORY.md index if new files created."
+    else
+      CRON_MSG="$CRON_MSG
 
 ## Part 1: Distillation
 1. Check memory/ for daily log files (YYYY-MM-DD.md, not in archive/).
@@ -253,6 +298,7 @@ if command -v openclaw &>/dev/null; then
 3. Synthesize, do not copy. Extract decisions, architecture, lessons, issues, capabilities.
 4. Move distilled logs to memory/archive/
 5. Update MEMORY.md index if new files created."
+    fi
 
     # Voice profiling (opt-in)
     if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
