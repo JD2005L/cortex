@@ -85,7 +85,7 @@ memory/
 
 Customize times by editing cron jobs: `openclaw cron list` then `openclaw cron edit <id> --cron "..."`.
 
-The nightly distillation also checks for OpenCortex updates via `clawhub update opencortex`. If a new version is available, it pulls it automatically.
+To update OpenCortex manually: `clawhub update opencortex`
 
 ## Git Backup (optional)
 

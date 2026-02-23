@@ -18,8 +18,7 @@ echo ""
 read -p "📝 Enable voice profiling? Analyzes conversation style for ghostwriting. (y/N): " ENABLE_VOICE
 ENABLE_VOICE=$(echo "$ENABLE_VOICE" | tr '[:upper:]' '[:lower:]')
 
-read -p "🔄 Enable self-update? Checks ClawHub for OpenCortex updates nightly. (y/N): " ENABLE_SELFUPDATE
-ENABLE_SELFUPDATE=$(echo "$ENABLE_SELFUPDATE" | tr '[:upper:]' '[:lower:]')
+
 
 echo ""
 
@@ -240,14 +239,6 @@ if command -v openclaw &>/dev/null; then
     # Build cron message dynamically based on feature selection
     CRON_MSG="You are an AI assistant. Daily memory maintenance task."
 
-    # Self-update (opt-in)
-    if [ "$ENABLE_SELFUPDATE" = "y" ] || [ "$ENABLE_SELFUPDATE" = "yes" ]; then
-      CRON_MSG="$CRON_MSG
-
-## Part 0: Self-Update
-1. Run: clawhub update opencortex 2>/dev/null — if updated, note in daily log."
-    fi
-
     CRON_MSG="$CRON_MSG
 
 ## Part 1: Distillation
@@ -339,18 +330,49 @@ echo ""
 read -p "📦 Set up git backup with secret scrubbing? (y/N): " SETUP_GIT
 if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
 
-  # Copy bundled scripts (inspectable in the skill package)
-  SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
-  for script in git-backup.sh git-scrub-secrets.sh git-restore-secrets.sh; do
-    if [ -f "$SKILL_DIR/$script" ]; then
-      cp "$SKILL_DIR/$script" "$WORKSPACE/scripts/$script"
-      echo "   📋 Copied $script"
-    fi
-  done
+  # Generate git helper scripts in the workspace
+  # These scripts use only sed and git — no network calls, no external dependencies
+  # Source templates documented at: https://github.com/JD2005L/opencortex#git-backup
 
-  chmod +x "$WORKSPACE/scripts/git-scrub-secrets.sh" 2>/dev/null
-  chmod +x "$WORKSPACE/scripts/git-restore-secrets.sh" 2>/dev/null
-  chmod +x "$WORKSPACE/scripts/git-backup.sh" 2>/dev/null
+  echo '#!/bin/bash
+# Scrub secrets before git commit. Reads .secrets-map (SECRET|PLACEHOLDER per line).
+WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
+SECRETS_FILE="$WORKSPACE/.secrets-map"
+[ ! -f "$SECRETS_FILE" ] && exit 0
+while IFS="|" read -r secret placeholder; do
+  [ -z "$secret" ] && continue; [[ "$secret" =~ ^# ]] && continue
+  git -C "$WORKSPACE" ls-files "*.md" "*.sh" "*.json" "*.conf" "*.py" | while read -r file; do
+    grep -q "$secret" "$WORKSPACE/$file" 2>/dev/null && sed -i "s|$secret|$placeholder|g" "$WORKSPACE/$file"
+  done
+done < "$SECRETS_FILE"' > "$WORKSPACE/scripts/git-scrub-secrets.sh"
+
+  echo '#!/bin/bash
+# Restore secrets after git push. Reverses git-scrub-secrets.sh.
+WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
+SECRETS_FILE="$WORKSPACE/.secrets-map"
+[ ! -f "$SECRETS_FILE" ] && exit 0
+while IFS="|" read -r secret placeholder; do
+  [ -z "$secret" ] && continue; [[ "$secret" =~ ^# ]] && continue
+  git -C "$WORKSPACE" ls-files "*.md" "*.sh" "*.json" "*.conf" "*.py" | while read -r file; do
+    grep -q "$placeholder" "$WORKSPACE/$file" 2>/dev/null && sed -i "s|$placeholder|$secret|g" "$WORKSPACE/$file"
+  done
+done < "$SECRETS_FILE"' > "$WORKSPACE/scripts/git-restore-secrets.sh"
+
+  echo '#!/bin/bash
+# Auto-commit and push workspace. Scrubs secrets before commit, restores after.
+WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$WORKSPACE" || exit 1
+if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then exit 0; fi
+"$WORKSPACE/scripts/git-scrub-secrets.sh"
+git add -A
+git commit -m "Auto-backup: $(date "+%Y-%m-%d %H:%M")" --quiet
+git push --quiet 2>/dev/null
+"$WORKSPACE/scripts/git-restore-secrets.sh"' > "$WORKSPACE/scripts/git-backup.sh"
+
+  chmod +x "$WORKSPACE/scripts/git-scrub-secrets.sh"
+  chmod +x "$WORKSPACE/scripts/git-restore-secrets.sh"
+  chmod +x "$WORKSPACE/scripts/git-backup.sh"
+  echo "   ✅ Git helper scripts created (inspect them in $WORKSPACE/scripts/)"
 
   create_if_missing "$WORKSPACE/.secrets-map" '# Secrets map: SECRET_VALUE|{{PLACEHOLDER}}
 # Add your secrets here. This file is gitignored.

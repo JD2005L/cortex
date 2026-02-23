@@ -134,7 +134,7 @@ OpenCortex does exactly what it describes: creates structured memory files, regi
 
 ### Instruction Scope
 
-The cron jobs instruct an OpenClaw agent session to read and write **workspace files only** — the same files listed in the Architecture section above. The distillation job routes information between workspace markdown files (e.g., daily log → project files). It does not access files outside the workspace, make API calls, or execute arbitrary commands. Voice profiling and self-update are **opt-in during installation** — declined by default.
+The cron jobs instruct an OpenClaw agent session to read and write **workspace files only** — the same files listed in the Architecture section above. The distillation job routes information between workspace markdown files (e.g., daily log → project files). It does not access files outside the workspace, make API calls, or execute arbitrary commands. Voice profiling is **opt-in during installation** — declined by default.
 
 ### Install Mechanism
 
@@ -159,7 +159,7 @@ The installer creates two persistent cron jobs (daily distillation, weekly synth
 - Can be listed (`openclaw cron list`), inspected, edited, or removed at any time
 
 Optional features that add scope (all **off by default**, enabled only if you say yes during install):
-- **Self-update:** Runs `clawhub update opencortex` — one network call to check for skill updates
+
 - **Voice profiling:** Reads conversation logs within the workspace to build a communication profile
 - **Git backup:** Runs `git push` on a cron — requires you to configure a remote and populate `.secrets-map`
 
@@ -203,10 +203,10 @@ Two cron jobs are created (both run as isolated OpenClaw sessions):
 
 | Job | What it reads | What it writes | Network access |
 |-----|--------------|----------------|----------------|
-| Daily Distillation | `memory/*.md`, workspace `*.md` | `memory/projects/`, `MEMORY.md`, `TOOLS.md`, `INFRA.md`, `USER.md`, `memory/VOICE.md` | `clawhub update opencortex` only (self-update check, can be removed) |
+| Daily Distillation | `memory/*.md`, workspace `*.md` | `memory/projects/`, `MEMORY.md`, `TOOLS.md`, `INFRA.md`, `USER.md`, `memory/VOICE.md` | None |
 | Weekly Synthesis | `memory/archive/*.md`, `memory/projects/*.md` | `memory/archive/weekly-*.md`, project files | None |
 
-Cron jobs **do not** make external API calls, send emails, post to services, or access anything outside the workspace — with one exception: the optional `clawhub update opencortex` self-update check. Remove that line from the cron if you want fully air-gapped operation.
+Cron jobs **do not** make external API calls, send emails, post to services, or access anything outside the workspace.
 
 ### 6. Voice Profiling (Optional)
 
@@ -216,7 +216,7 @@ To disable voice profiling: delete `memory/VOICE.md` and remove Part 2 from the 
 
 ### 7. No Hidden Endpoints
 
-OpenCortex contains **zero network operations** beyond the optional `clawhub update` call. No telemetry, no phone-home, no external uploads. Every script is plain bash with `sed`, `git`, `grep`, and `find`. [Full source is public](https://github.com/JD2005L/opencortex).
+OpenCortex contains **zero network operations**. No telemetry, no phone-home, no external uploads. Every script is plain bash with `sed`, `git`, `grep`, and `find`. [Full source is public](https://github.com/JD2005L/opencortex).
 
 ### Summary
 
@@ -228,7 +228,7 @@ OpenCortex contains **zero network operations** beyond the optional `clawhub upd
 | Root workspace default | **Configurable via `CLAWD_WORKSPACE`.** |
 | Autonomous file writes | **Workspace-only.** No system files touched. |
 | Voice profiling privacy | **Optional, local-only, removable.** |
-| Network access | **None** except optional self-update. Removable. |
+| Network access | **None.** All operations are local file I/O. |
 | Hidden endpoints | **None.** Full source public and auditable. |
 
 ## Requirements
