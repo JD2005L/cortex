@@ -8,6 +8,7 @@
 #   vault.sh get <key>         — Retrieve a secret
 #   vault.sh list              — List stored keys (not values)
 #   vault.sh delete <key>      — Remove a secret
+#   vault.sh rotate            — Rotate passphrase (re-encrypts all secrets)
 
 set -euo pipefail
 
@@ -63,7 +64,16 @@ case "${1:-help}" in
       echo "Usage: vault.sh set <key> <value>"
       exit 1
     fi
-    
+
+    # Validate key name: must match ^[a-zA-Z_][a-zA-Z0-9_]*$
+    if ! echo "$KEY" | grep -qE '^[a-zA-Z_][a-zA-Z0-9_]*$'; then
+      echo "❌ Invalid key name: '$KEY'"
+      echo "   Key must start with a letter or underscore, and contain only"
+      echo "   letters, digits, and underscores (^[a-zA-Z_][a-zA-Z0-9_]*\$)."
+      echo "   This prevents keys with '=' or spaces from breaking storage."
+      exit 1
+    fi
+
     # Load existing, remove old key if exists, add new
     CONTENT=$(_decrypt | grep -v "^${KEY}=" || true)
     CONTENT="${CONTENT}
@@ -112,6 +122,28 @@ ${KEY}=${VALUE}"
     echo "✅ Deleted: $KEY"
     ;;
     
+  rotate)
+    _ensure_vault
+    echo "🔄 Rotating vault passphrase..."
+
+    # Decrypt all secrets with current passphrase
+    CONTENT=$(_decrypt)
+
+    # Generate a new passphrase (same method as init)
+    NEW_PASS=$(openssl rand -base64 32)
+
+    # Update the passphrase file
+    echo "$NEW_PASS" > "$VAULT_PASS"
+    chmod 600 "$VAULT_PASS"
+
+    # Re-encrypt all secrets with the new passphrase
+    _encrypt "$CONTENT"
+
+    echo "✅ Passphrase rotated successfully."
+    echo "   All secrets have been re-encrypted with the new passphrase."
+    echo "   Old passphrase is no longer valid."
+    ;;
+
   help|*)
     echo "OpenCortex Vault — Encrypted secret storage"
     echo ""
@@ -121,6 +153,7 @@ ${KEY}=${VALUE}"
     echo "  get <key>         Retrieve a secret"
     echo "  list              List keys (not values)"
     echo "  delete <key>      Remove a secret"
+    echo "  rotate            Rotate passphrase (re-encrypts all secrets)"
     echo ""
     echo "Secrets encrypted at rest via GPG symmetric encryption (AES-256). The symmetric passphrase is stored in .vault/.passphrase with 600 permissions."
     echo "Reference in TOOLS.md: 'password: vault:my_key_name'"

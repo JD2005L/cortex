@@ -65,7 +65,11 @@ cd opencortex
 bash scripts/install.sh
 ```
 
-The installer is idempotent — safe to re-run. It won't overwrite existing files.
+The installer is idempotent — safe to re-run. It won't overwrite existing files. Pass `--dry-run` to preview what would be created without writing anything:
+
+```bash
+bash scripts/install.sh --dry-run
+```
 
 ### After install:
 1. Edit `SOUL.md` — make it yours
@@ -91,7 +95,9 @@ The installer is idempotent — safe to re-run. It won't overwrite existing file
 | Schedule | Job | Purpose |
 |----------|-----|---------|
 | Daily 3 AM | Memory Distillation | Distill daily logs → permanent knowledge, optimize, check cron spacing |
-| Sunday 5 AM | Weekly Synthesis | Find patterns, recurring problems, unfinished threads, validate decisions |
+| Sunday 5 AM | Weekly Synthesis | Find patterns, recurring problems, unfinished threads, validate decisions; auto-detects repeated procedures and creates runbooks |
+
+Both jobs use a shared lockfile (`/tmp/opencortex-distill.lock`) to prevent conflicts when they run near each other.
 
 ### Principles (P1–P6)
 | # | Principle | Purpose |
@@ -151,7 +157,7 @@ No external downloads, no package installs, no network calls during installation
 
 OpenCortex declares no required environment variables, API keys, or config files. The cron jobs reference `--model "sonnet"` which is resolved by your existing OpenClaw gateway — OpenCortex never sees or handles model provider keys. The P4 (Tool Shed) principle guides the *agent* to document tools it encounters during conversation — this is agent behavior, not skill behavior. If you prefer metadata-only documentation in TOOLS.md, instruct your agent accordingly.
 
-**Vault security:** Secrets encrypted at rest via GPG symmetric encryption (AES-256). The symmetric passphrase is stored in `.vault/.passphrase` with 600 permissions. The passphrase is generated locally by `openssl rand` during `vault init` and never transmitted externally.
+**Vault security:** Secrets encrypted at rest via GPG symmetric encryption (AES-256). The symmetric passphrase is stored in `.vault/.passphrase` with 600 permissions. The passphrase is generated locally by `openssl rand` during `vault init` and never transmitted externally. To rotate the passphrase, run `scripts/vault.sh rotate` — it re-encrypts all secrets in place with a new passphrase. Key names are validated on `vault.sh set`: alphanumeric and underscores only, must start with a letter or underscore.
 
 ### Persistence & Privilege
 
@@ -174,7 +180,7 @@ OpenCortex does not require or reference any API keys, tokens, or environment va
 
 ### 2. Tool Documentation in TOOLS.md
 
-The P4 (Tool Shed) principle instructs the *agent* to document tools and access methods. The agent, during normal conversation with you, may document tools you provide — that's the agent's behavior, not the skill's. If you prefer metadata-only documentation (e.g., "Database: see env var $DB_PASS"), instruct your agent accordingly. In secure mode, the vault stores encrypted values and TOOLS.md receives only `vault:<key>` references. Note: the vault passphrase itself is stored at `.vault/.passphrase` (mode 600) — secrets encrypted at rest, passphrase protected by filesystem permissions.
+The P4 (Tool Shed) principle instructs the *agent* to document tools and access methods. The agent, during normal conversation with you, may document tools you provide — that's the agent's behavior, not the skill's. If you prefer metadata-only documentation (e.g., "Database: see env var $DB_PASS"), instruct your agent accordingly. In secure mode, the vault stores encrypted values and TOOLS.md receives only `vault:<key>` references. Note: the vault passphrase itself is stored at `.vault/.passphrase` (mode 600) — secrets encrypted at rest, passphrase protected by filesystem permissions. Key names must be alphanumeric + underscores and start with a letter or underscore (`vault.sh set` enforces this).
 
 ### 3. Git Backup & Secret Scrubbing (Optional, Off by Default)
 
@@ -183,7 +189,7 @@ Git backup is **opt-in** — the installer asks before creating any backup scrip
 - `.secrets-map` defines `secret|{{PLACEHOLDER}}` pairs (you write this manually)
 - `git-scrub-secrets.sh` replaces all secrets with placeholders via `sed` before commit
 - `git-restore-secrets.sh` reverses the replacements after push
-- `git-backup.sh` calls scrub → `git add -A` → commit → push → restore
+- `git-backup.sh` calls scrub → `git add -A` → commit → **verifies no raw secrets remain in tracked files** → push → restore. If verification finds any secrets, the push is aborted and secrets are restored immediately.
 - `.secrets-map` is gitignored with 600 permissions
 
 **No scrubbing happens unless you populate `.secrets-map`.** The scripts contain no network calls, no external endpoints, no telemetry. They are pure `sed` + `git` operations. [Read them in full](scripts/).
@@ -207,7 +213,9 @@ Two cron jobs are created (both run as isolated OpenClaw sessions):
 | Job | What it reads | What it writes | Network access |
 |-----|--------------|----------------|----------------|
 | Daily Distillation | `memory/*.md`, workspace `*.md` | `memory/projects/`, `MEMORY.md`, `TOOLS.md`, `INFRA.md`, `USER.md`, `memory/VOICE.md` | None |
-| Weekly Synthesis | `memory/archive/*.md`, `memory/projects/*.md` | `memory/archive/weekly-*.md`, project files | None |
+| Weekly Synthesis | `memory/archive/*.md`, `memory/projects/*.md` | `memory/archive/weekly-*.md`, project files, `memory/runbooks/` | None |
+
+Both jobs acquire a lockfile (`/tmp/opencortex-distill.lock`) before running, so concurrent execution is safe if the daily and weekly jobs overlap.
 
 Cron jobs **do not** make external API calls, send emails, post to services, or access anything outside the workspace.
 
@@ -227,7 +235,7 @@ OpenCortex contains **zero network operations**. No telemetry, no phone-home, no
 |---------|--------|
 | Required API keys/env vars | **None.** Model access handled by OpenClaw gateway. |
 | Raw secrets in TOOLS.md | **Prevented in secure mode.** Vault stores encrypted values, TOOLS.md gets `vault:<key>` references only. |
-| Git scrubbing reliability | **Opt-in, manual .secrets-map, auditable scripts.** Test before use. |
+| Git scrubbing reliability | **Opt-in, manual .secrets-map, auditable scripts. Pre-push verification aborts if secrets detected.** Test before use. |
 | Root workspace default | **Configurable via `CLAWD_WORKSPACE`.** |
 | Autonomous file writes | **Workspace-only.** No system files touched. |
 | Voice profiling privacy | **Optional, local-only, removable.** |

@@ -19,6 +19,16 @@ for tool in "${OPTIONAL_TOOLS[@]}"; do
   command -v "$tool" &>/dev/null || echo "   ⚠️  Optional tool not found: $tool (some features will be unavailable)"
 done
 
+# --- Dry-run mode ---
+DRY_RUN=false
+for arg in "$@"; do
+  [[ "$arg" == "--dry-run" ]] && DRY_RUN=true
+done
+if [ "$DRY_RUN" = "true" ]; then
+  echo "⚠️  DRY RUN MODE — no files will be created or modified."
+  echo ""
+fi
+
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
 TZ="${CLAWD_TZ:-UTC}"
 
@@ -46,15 +56,26 @@ echo ""
 
 # --- Directory Structure ---
 echo "📁 Creating directory structure..."
-mkdir -p "$WORKSPACE/memory/projects"
-mkdir -p "$WORKSPACE/memory/runbooks"
-mkdir -p "$WORKSPACE/memory/archive"
-mkdir -p "$WORKSPACE/scripts"
+if [ "$DRY_RUN" = "true" ]; then
+  echo "   [DRY RUN] Would mkdir: $WORKSPACE/memory/projects"
+  echo "   [DRY RUN] Would mkdir: $WORKSPACE/memory/runbooks"
+  echo "   [DRY RUN] Would mkdir: $WORKSPACE/memory/archive"
+  echo "   [DRY RUN] Would mkdir: $WORKSPACE/scripts"
+else
+  mkdir -p "$WORKSPACE/memory/projects"
+  mkdir -p "$WORKSPACE/memory/runbooks"
+  mkdir -p "$WORKSPACE/memory/archive"
+  mkdir -p "$WORKSPACE/scripts"
+fi
 
 # --- Core Files (create only if missing) ---
 create_if_missing() {
   local file="$1"
   local content="$2"
+  if [ "$DRY_RUN" = "true" ]; then
+    echo "   [DRY RUN] Would create: $file"
+    return
+  fi
   if [ ! -f "$file" ]; then
     echo "   ✅ Creating $file"
     echo "$content" > "$file"
@@ -254,12 +275,18 @@ fi
 if [ "$SECRET_MODE" = "secure" ]; then
   SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
   if [ -f "$SKILL_DIR/vault.sh" ]; then
-    cp "$SKILL_DIR/vault.sh" "$WORKSPACE/scripts/vault.sh"
-    chmod +x "$WORKSPACE/scripts/vault.sh"
-    echo "   📋 Copied vault.sh"
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would copy: $SKILL_DIR/vault.sh → $WORKSPACE/scripts/vault.sh"
+    else
+      cp "$SKILL_DIR/vault.sh" "$WORKSPACE/scripts/vault.sh"
+      chmod +x "$WORKSPACE/scripts/vault.sh"
+      echo "   📋 Copied vault.sh"
+    fi
   fi
   
-  "$WORKSPACE/scripts/vault.sh" init 2>/dev/null || true
+  if [ "$DRY_RUN" != "true" ]; then
+    "$WORKSPACE/scripts/vault.sh" init 2>/dev/null || true
+  fi
   
   # Add vault to gitignore
   if [ -f "$WORKSPACE/.gitignore" ]; then
@@ -282,7 +309,9 @@ if command -v openclaw &>/dev/null; then
   EXISTING=$(openclaw cron list --json 2>/dev/null | grep -c "Memory Distillation" || true)
   if [ "$EXISTING" = "0" ]; then
     # Build cron message dynamically based on feature selection
-    CRON_MSG="You are an AI assistant. Daily memory maintenance task."
+    CRON_MSG="You are an AI assistant. Daily memory maintenance task.
+
+IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. If it exists and was created less than 10 minutes ago, wait 30 seconds and retry (up to 3 times). Before starting work, create this lockfile. Remove it when done. This prevents daily and weekly jobs from conflicting."
 
     if [ "$SECRET_MODE" = "secure" ]; then
       CRON_MSG="$CRON_MSG
@@ -345,15 +374,19 @@ if command -v openclaw &>/dev/null; then
 Before completing, append debrief to memory/YYYY-MM-DD.md.
 Reply with brief summary."
 
-    openclaw cron add \
-      --name "Daily Memory Distillation" \
-      --cron "0 10 * * *" \
-      --tz "$TZ" \
-      --model "sonnet" \
-      --session "isolated" \
-      --timeout-seconds 180 \
-      --no-deliver \
-      --message "$CRON_MSG" 2>/dev/null && echo "   ✅ Daily Memory Distillation cron created" || echo "   ⚠️  Failed to create distillation cron"
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would run: openclaw cron add --name 'Daily Memory Distillation' --cron '0 10 * * *'"
+    else
+      openclaw cron add \
+        --name "Daily Memory Distillation" \
+        --cron "0 10 * * *" \
+        --tz "$TZ" \
+        --model "sonnet" \
+        --session "isolated" \
+        --timeout-seconds 180 \
+        --no-deliver \
+        --message "$CRON_MSG" 2>/dev/null && echo "   ✅ Daily Memory Distillation cron created" || echo "   ⚠️  Failed to create distillation cron"
+    fi
   else
     echo "   ⏭️  Daily Memory Distillation already exists"
   fi
@@ -361,6 +394,9 @@ Reply with brief summary."
   # Weekly Synthesis
   EXISTING=$(openclaw cron list --json 2>/dev/null | grep -c "Weekly Synthesis" || true)
   if [ "$EXISTING" = "0" ]; then
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would run: openclaw cron add --name 'Weekly Synthesis' --cron '0 12 * * 0'"
+    else
     openclaw cron add \
       --name "Weekly Synthesis" \
       --cron "0 12 * * 0" \
@@ -370,6 +406,8 @@ Reply with brief summary."
       --timeout-seconds 180 \
       --no-deliver \
       --message "You are an AI assistant. Weekly synthesis — higher-altitude review.
+
+IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. If it exists and was created less than 10 minutes ago, wait 30 seconds and retry (up to 3 times). Before starting work, create this lockfile. Remove it when done. This prevents daily and weekly jobs from conflicting.
 
 1. Read archived daily logs from past 7 days (memory/archive/).
 2. Read all project files (memory/projects/).
@@ -381,8 +419,15 @@ Reply with brief summary."
    e. New capabilities → verify in TOOLS.md with abilities (P4)
 4. Write weekly summary to memory/archive/weekly-YYYY-MM-DD.md.
 
+## Runbook Detection
+- Review this week's daily logs for any multi-step procedure (3+ steps) that was performed more than once, or is likely to recur.
+- For each candidate: check if a runbook already exists in memory/runbooks/.
+- If not, create one with clear step-by-step instructions that a sub-agent could follow independently.
+- Update MEMORY.md runbooks index if new runbooks created.
+
 Before completing, append debrief to memory/YYYY-MM-DD.md.
 Reply with weekly summary." 2>/dev/null && echo "   ✅ Weekly Synthesis cron created" || echo "   ⚠️  Failed to create synthesis cron"
+    fi
   else
     echo "   ⏭️  Weekly Synthesis already exists"
   fi
@@ -400,9 +445,13 @@ if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
   SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
   for script in git-backup.sh git-scrub-secrets.sh git-restore-secrets.sh; do
     if [ -f "$SKILL_DIR/$script" ]; then
-      cp "$SKILL_DIR/$script" "$WORKSPACE/scripts/$script"
-      chmod +x "$WORKSPACE/scripts/$script"
-      echo "   📋 Copied $script"
+      if [ "$DRY_RUN" = "true" ]; then
+        echo "   [DRY RUN] Would copy: $SKILL_DIR/$script → $WORKSPACE/scripts/$script"
+      else
+        cp "$SKILL_DIR/$script" "$WORKSPACE/scripts/$script"
+        chmod +x "$WORKSPACE/scripts/$script"
+        echo "   📋 Copied $script"
+      fi
     fi
   done
 
@@ -410,7 +459,7 @@ if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
 # Add your secrets here. This file is gitignored.
 # Example: mysecretpassword123|{{MY_PASSWORD}}'
 
-  chmod 600 "$WORKSPACE/.secrets-map"
+  [ "$DRY_RUN" != "true" ] && chmod 600 "$WORKSPACE/.secrets-map"
 
   # Add to gitignore
   if [ -f "$WORKSPACE/.gitignore" ]; then
@@ -421,8 +470,12 @@ if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
 
   # Add cron
   if ! crontab -l 2>/dev/null | grep -q "git-backup"; then
-    (crontab -l 2>/dev/null; echo "0 */6 * * * $WORKSPACE/scripts/git-backup.sh") | crontab -
-    echo "   ✅ Git backup cron added (every 6 hours)"
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would add crontab entry: 0 */6 * * * $WORKSPACE/scripts/git-backup.sh"
+    else
+      (crontab -l 2>/dev/null; echo "0 */6 * * * $WORKSPACE/scripts/git-backup.sh") | crontab -
+      echo "   ✅ Git backup cron added (every 6 hours)"
+    fi
   else
     echo "   ⏭️  Git backup cron already exists"
   fi
@@ -446,3 +499,11 @@ echo "  6. If using git backup: edit .secrets-map with your actual secrets"
 echo ""
 echo "The system will self-improve from here. Work normally — the nightly"
 echo "distillation will organize everything you learn into permanent memory."
+
+if [ "$DRY_RUN" = "true" ]; then
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  Dry run complete. No files were created."
+  echo "  Re-run without --dry-run to install."
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+fi

@@ -22,15 +22,16 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 3. **Installs weekly synthesis** that catches patterns across days
 4. **Establishes principles** that enforce good memory habits
 5. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting
-6. **Encrypts sensitive data** in an AES-256 vault with key-only references in docs
+6. **Encrypts sensitive data** in an AES-256 vault with key-only references in docs; supports passphrase rotation (`vault.sh rotate`) and validates key names on `vault.sh set`
 7. **Enables safe git backup** with automatic secret scrubbing
 
 ## Installation
 
-Run `scripts/install.sh` from this skill directory. It is idempotent — safe to re-run.
+Run `scripts/install.sh` from this skill directory. It is idempotent — safe to re-run. Add `--dry-run` to preview what would be installed without writing anything.
 
 ```bash
 bash scripts/install.sh
+bash scripts/install.sh --dry-run   # preview only
 ```
 
 The script will:
@@ -82,7 +83,9 @@ memory/
 | Schedule | Name | What it does |
 |----------|------|-------------|
 | Daily 3 AM (local) | Distillation | Reads daily logs → distills into project/tools/infra files → optimizes → archives |
-| Weekly Sunday 5 AM | Synthesis | Reviews week for patterns, recurring problems, unfinished threads, decisions |
+| Weekly Sunday 5 AM | Synthesis | Reviews week for patterns, recurring problems, unfinished threads, decisions; auto-creates runbooks from repeated procedures |
+
+Both jobs use a shared lockfile (`/tmp/opencortex-distill.lock`) to prevent conflicts when daily and weekly runs overlap.
 
 Customize times by editing cron jobs: `openclaw cron list` then `openclaw cron edit <id> --cron "..."`.
 
@@ -97,6 +100,8 @@ If enabled during install, creates:
 - `.secrets-map` — maps secrets to placeholders (gitignored, 600 perms)
 
 Add secrets to `.secrets-map` in format: `actual_secret|{{PLACEHOLDER_NAME}}`
+
+Before each push, `git-backup.sh` verifies no raw secrets remain in tracked files after scrubbing. If any are found, the push is aborted and secrets are restored — nothing reaches the remote.
 
 ## Customization
 
@@ -114,7 +119,7 @@ Add secrets to `.secrets-map` in format: `actual_secret|{{PLACEHOLDER_NAME}}`
 Daily work → daily log
   → nightly distill → routes to project/tools/infra/principles files
                      → optimization pass (dedup, prune stale, condense)
-  → weekly synthesis → patterns, recurring problems, unfinished threads
+  → weekly synthesis → patterns, recurring problems, unfinished threads → auto-creates runbooks from repeated procedures → `memory/runbooks/`
 Sub-agent work → debrief (P6) → daily log → same pipeline
 Decisions → captured with reasoning (P5) → never re-asked
 New tools → documented with abilities (P4) → findable by intent
