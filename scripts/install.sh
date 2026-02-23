@@ -3,6 +3,22 @@
 # Idempotent: safe to re-run. Won't overwrite existing files.
 set -euo pipefail
 
+# --- Pre-flight: check required tools ---
+REQUIRED_TOOLS=(grep sed find)
+OPTIONAL_TOOLS=(openclaw git gpg)
+MISSING=()
+for tool in "${REQUIRED_TOOLS[@]}"; do
+  command -v "$tool" &>/dev/null || MISSING+=("$tool")
+done
+if [ ${#MISSING[@]} -gt 0 ]; then
+  echo "❌ Missing required tools: ${MISSING[*]}"
+  echo "   Install them and re-run."
+  exit 1
+fi
+for tool in "${OPTIONAL_TOOLS[@]}"; do
+  command -v "$tool" &>/dev/null || echo "   ⚠️  Optional tool not found: $tool (some features will be unavailable)"
+done
+
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
 TZ="${CLAWD_TZ:-UTC}"
 

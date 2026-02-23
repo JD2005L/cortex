@@ -1,6 +1,6 @@
 #!/bin/bash
 # OpenCortex Vault — Encrypted key-value store for sensitive data
-# Uses GPG symmetric encryption. Secrets never stored in plain text.
+# Uses GPG symmetric encryption (AES-256). Passphrase stored at .vault/.passphrase (mode 600).
 #
 # Usage:
 #   vault.sh init              — Set up vault (creates GPG key + encrypted store)
@@ -122,7 +122,7 @@ ${KEY}=${VALUE}"
     echo "  list              List keys (not values)"
     echo "  delete <key>      Remove a secret"
     echo ""
-    echo "Secrets are AES-256 encrypted. Plain text values never touch disk."
+    echo "Secrets encrypted at rest via GPG symmetric encryption (AES-256). The symmetric passphrase is stored in .vault/.passphrase with 600 permissions."
     echo "Reference in TOOLS.md: 'password: vault:my_key_name'"
     ;;
 esac

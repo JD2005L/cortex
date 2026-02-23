@@ -149,7 +149,9 @@ No external downloads, no package installs, no network calls during installation
 
 ### Credentials
 
-OpenCortex declares no required environment variables, API keys, or config files. The cron jobs reference `--model "sonnet"` which is resolved by your existing OpenClaw gateway — OpenCortex never sees or handles model provider keys. The P4 (Tool Shed) principle guides the *agent* to document tools it encounters during conversation — this is agent behavior, not skill behavior. OpenCortex itself never writes sensitive data to any file. If you prefer metadata-only documentation in TOOLS.md, instruct your agent accordingly.
+OpenCortex declares no required environment variables, API keys, or config files. The cron jobs reference `--model "sonnet"` which is resolved by your existing OpenClaw gateway — OpenCortex never sees or handles model provider keys. The P4 (Tool Shed) principle guides the *agent* to document tools it encounters during conversation — this is agent behavior, not skill behavior. If you prefer metadata-only documentation in TOOLS.md, instruct your agent accordingly.
+
+**Vault security:** Secrets encrypted at rest via GPG symmetric encryption (AES-256). The symmetric passphrase is stored in `.vault/.passphrase` with 600 permissions. The passphrase is generated locally by `openssl rand` during `vault init` and never transmitted externally.
 
 ### Persistence & Privilege
 
@@ -172,7 +174,7 @@ OpenCortex does not require or reference any API keys, tokens, or environment va
 
 ### 2. Tool Documentation in TOOLS.md
 
-The P4 (Tool Shed) principle instructs the *agent* to document tools and access methods. **OpenCortex itself never writes sensitive data into any file.** The agent, during normal conversation with you, may document tools you provide — that's the agent's behavior, not the skill's. If you prefer metadata-only documentation (e.g., "Database: see env var $DB_PASS"), instruct your agent accordingly.
+The P4 (Tool Shed) principle instructs the *agent* to document tools and access methods. The agent, during normal conversation with you, may document tools you provide — that's the agent's behavior, not the skill's. If you prefer metadata-only documentation (e.g., "Database: see env var $DB_PASS"), instruct your agent accordingly. In secure mode, the vault stores encrypted values and TOOLS.md receives only `vault:<key>` references. Note: the vault passphrase itself is stored at `.vault/.passphrase` (mode 600) — secrets encrypted at rest, passphrase protected by filesystem permissions.
 
 ### 3. Git Backup & Secret Scrubbing (Optional, Off by Default)
 
@@ -235,6 +237,8 @@ OpenCortex contains **zero network operations**. No telemetry, no phone-home, no
 ## Requirements
 
 - [OpenClaw](https://github.com/openclaw/openclaw) 2026.2.x+
+- **Required:** `grep`, `sed`, `find` (standard on most systems)
+- **Optional:** `git` (for backup), `gpg` (for vault), `openssl` (for passphrase generation)
 
 ## License
 
