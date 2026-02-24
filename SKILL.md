@@ -30,14 +30,23 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 
 ## Installation
 
-**Requires:** [OpenClaw](https://github.com/openclaw/openclaw) 2026.2.x+ already installed. Run these commands from your OpenClaw workspace directory (e.g. `~/clawd`).
+**You'll need:**
+- [OpenClaw](https://github.com/openclaw/openclaw) 2026.2.x+
+- [ClawHub CLI](https://clawhub.com) (the tool that downloads skills)
+- Node.js 18+ and npm
 
 ```bash
-# Step 1: Download the skill files
+# 1. Install prerequisites (skip any you already have)
+npm install -g openclaw
+npm install -g clawhub
+
+# 2. Go to your OpenClaw workspace directory
+cd ~/clawd    # or wherever your workspace is
+
+# 3. Download the skill
 clawhub install opencortex
 
-# Step 2: Run the installer — this actually sets up the memory structure,
-# cron jobs, and files. Step 1 just downloads; this step does the work.
+# 4. Run the installer
 cd skills/opencortex
 bash scripts/install.sh
 
@@ -45,7 +54,7 @@ bash scripts/install.sh
 bash scripts/install.sh --dry-run
 ```
 
-The installer is safe to re-run — it skips anything that already exists.
+The installer will ask about optional features (encrypted vault, voice profiling, git backup). It's safe to re-run — it skips anything that already exists.
 
 The script will:
 - Create the file hierarchy (non-destructively — won't overwrite existing files)
