@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="2.8.7"
+OPENCORTEX_VERSION="2.8.8"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -20,9 +20,38 @@ fi
 if [ -n "$INSTALLED_VERSION" ]; then
   if [ "$INSTALLED_VERSION" = "$OPENCORTEX_VERSION" ]; then
     echo "✅ OpenCortex v$OPENCORTEX_VERSION is already installed."
-    echo "   To check health: bash skills/opencortex/scripts/verify.sh"
-    echo "   To force reinstall: delete $VERSION_FILE and re-run."
-    exit 0
+    echo ""
+    echo "   Options:"
+    echo "   1) Reconfigure — re-run setup to enable/change optional features"
+    echo "   2) Check for updates — download latest from ClawHub and update"
+    echo "   3) Verify health — run verify.sh (read-only)"
+    echo "   4) Exit"
+    echo ""
+    read -p "   Choose (1/2/3/4) [4]: " RECONFIG_CHOICE
+    RECONFIG_CHOICE="${RECONFIG_CHOICE:-4}"
+    case "$RECONFIG_CHOICE" in
+      1) echo ""; echo "Proceeding with reconfiguration..." ;;
+      2)
+        if command -v clawhub &>/dev/null; then
+          echo ""
+          echo "   Downloading latest from ClawHub..."
+          clawhub install opencortex --force && echo "   ✅ Downloaded. Re-run this script to apply updates." || echo "   ⚠️  Download failed."
+        else
+          echo "   clawhub CLI not found. Run: clawhub install opencortex --force"
+        fi
+        exit 0
+        ;;
+      3)
+        SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+        if [ -f "$SKILL_DIR/verify.sh" ]; then
+          bash "$SKILL_DIR/verify.sh"
+        else
+          echo "   verify.sh not found"
+        fi
+        exit 0
+        ;;
+      *) echo "   Nothing to do."; exit 0 ;;
+    esac
   else
     if [ "$INSTALLED_VERSION" = "unknown" ]; then
       echo "🔄 OpenCortex detected (version unknown) — latest is v$OPENCORTEX_VERSION"
