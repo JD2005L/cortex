@@ -62,11 +62,17 @@ _store_passphrase() {
       echo "   🔐 Passphrase stored in kernel keyring (keyctl)"
       ;;
     *)
-      # Fallback to file
-      echo "$pass" > "$VAULT_PASS_FILE"
-      chmod 600 "$VAULT_PASS_FILE"
-      echo "   📁 Passphrase stored in $VAULT_PASS_FILE (mode 600)"
-      echo "   💡 For better security, install secret-tool (Linux) or use macOS Keychain"
+      # Fallback to file — only if explicitly allowed
+      if [ "${OPENCORTEX_ALLOW_FILE_PASSPHRASE:-0}" = "1" ]; then
+        echo "$pass" > "$VAULT_PASS_FILE"
+        chmod 600 "$VAULT_PASS_FILE"
+        echo "   📁 Passphrase stored in $VAULT_PASS_FILE (mode 600)"
+        echo "   ⚠️  File-based storage is less secure than a system keyring"
+      else
+        echo "   ❌ No system keyring available (need secret-tool, macOS Keychain, or keyctl)."
+        echo "   💡 Install a keyring tool, or set OPENCORTEX_ALLOW_FILE_PASSPHRASE=1 to allow file-based storage."
+        return 1
+      fi
       ;;
   esac
 }

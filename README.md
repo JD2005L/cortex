@@ -194,7 +194,7 @@ The installer creates two persistent cron jobs (daily distillation, weekly synth
 Optional features that add scope (all **off by default**, enabled only if you say yes during install):
 
 - **Voice profiling:** Reads conversation logs within the workspace to build a communication profile
-- **Git backup:** Runs `git push` on a cron — requires you to configure a remote and populate `.secrets-map`
+- **Git backup:** Commits locally by default — push requires explicit `--push` flag. You control when data leaves your machine.
 
 To run fully air-gapped: decline all three optional features during install.
 
@@ -259,7 +259,9 @@ OpenCortex contains **zero network operations**. No telemetry, no phone-home, no
 |---------|--------|
 | Required API keys/env vars | **None.** Model access handled by OpenClaw gateway. |
 | Raw secrets in TOOLS.md | **Prevented in secure mode.** Vault stores encrypted values, TOOLS.md gets `vault:<key>` references only. |
-| Vault passphrase on disk | **Avoided when possible.** Auto-detects system keyring (secret-tool, macOS Keychain, keyctl). File fallback only if no keyring available. Run `vault.sh migrate` to move off file. |
+| Vault passphrase on disk | **Blocked by default.** Requires system keyring (secret-tool, macOS Keychain, keyctl). File fallback only if `OPENCORTEX_ALLOW_FILE_PASSPHRASE=1` is explicitly set. |
+| Auto git push | **Disabled by default.** `git-backup.sh` commits locally only. Push requires explicit `--push` flag. No data leaves your machine unless you explicitly choose it. |
+| Scrub scope | **Known text extensions by default** (md, sh, json, conf, py, yaml, yml, toml, env, txt, cfg). Set `OPENCORTEX_SCRUB_ALL=1` to scrub all tracked files. |
 | Git scrubbing reliability | **Opt-in, manual .secrets-map, auditable scripts. Pre-push verification aborts if secrets detected.** Test before use. |
 | Root workspace default | **Configurable via `CLAWD_WORKSPACE`.** |
 | Autonomous file writes | **Workspace-only.** No system files touched. |

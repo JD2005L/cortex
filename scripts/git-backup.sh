@@ -48,5 +48,14 @@ fi
 
 git add -A
 git commit -m "Auto-backup: $(date '+%Y-%m-%d %H:%M')" --quiet
-git push --quiet 2>/dev/null
+
+# Push only if --push flag is passed (manual confirmation required)
+if [ "${1:-}" = "--push" ]; then
+  git push --quiet 2>/dev/null
+  echo "✅ Committed and pushed."
+else
+  echo "✅ Committed locally. Run with --push to push to remote."
+  echo "   Or manually: git push"
+fi
+
 "$WORKSPACE/scripts/git-restore-secrets.sh"
