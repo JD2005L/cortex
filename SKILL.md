@@ -22,7 +22,7 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 2. **Installs nightly maintenance** that distills daily work into permanent knowledge
 3. **Installs weekly synthesis** that catches patterns across days
 4. **Establishes principles** that enforce good memory habits
-5. **Principle enforcement** — Nightly audits verify tool documentation, decision capture, sub-agent debriefs, and failure analysis. Nothing slips through the cracks.
+5. **Principle enforcement** — Nightly audits verify tool documentation, decision capture, sub-agent debriefs, failure analysis, and unnecessary deferrals to the user. Nothing slips through the cracks.
 6. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting
 7. **Encrypts sensitive data** in an AES-256 vault with key-only references in docs; supports passphrase rotation (`vault.sh rotate`) and validates key names on `vault.sh set`
 8. **Enables safe git backup** with automatic secret scrubbing
