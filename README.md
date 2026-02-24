@@ -66,6 +66,11 @@ bash skills/opencortex/scripts/install.sh
 
 **Important:** Run the installer from your workspace root (e.g. `~/clawd`), NOT from inside the skill folder. The installer creates files in your current directory.
 
+```bash
+# Verify everything is working
+bash skills/opencortex/scripts/verify.sh
+```
+
 ### Option 2: From source
 ```bash
 git clone https://github.com/JD2005L/opencortex.git

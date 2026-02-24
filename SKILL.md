@@ -48,6 +48,11 @@ bash skills/opencortex/scripts/install.sh --dry-run
 
 The installer will ask about optional features (encrypted vault, voice profiling, git backup). It's safe to re-run — it skips anything that already exists. The installer itself makes no network calls — it only creates local files and registers cron jobs.
 
+```bash
+# 3. Verify everything is working
+bash skills/opencortex/scripts/verify.sh
+```
+
 The script will:
 - Create the file hierarchy (non-destructively — won't overwrite existing files)
 - Create directory structure
