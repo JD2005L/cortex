@@ -29,12 +29,19 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 
 ## Installation
 
-Run `scripts/install.sh` from this skill directory. It is idempotent — safe to re-run. Add `--dry-run` to preview what would be installed without writing anything.
-
 ```bash
+# Step 1: Download the skill
+clawhub install opencortex
+
+# Step 2: Run the installer
+cd skills/opencortex
 bash scripts/install.sh
-bash scripts/install.sh --dry-run   # preview only
+
+# Optional: preview first without changing anything
+bash scripts/install.sh --dry-run
 ```
+
+The installer is safe to re-run — it skips anything that already exists.
 
 The script will:
 - Create the file hierarchy (non-destructively — won't overwrite existing files)
