@@ -168,12 +168,16 @@ All tools, APIs, access methods, and capabilities SHALL be documented in TOOLS.m
 
 ### P5: Capture Decisions
 When the user makes a decision or states a preference, immediately record it in the relevant file with reasoning. Never re-ask something already decided. Format: **Decision:** [what] — [why] (date)
+**Recognition:** Decisions include: explicit choices, stated preferences, architectural directions, and workflow rules. If the user expresses an opinion that would affect future work, that is a decision — capture it.
+**Enforcement:** Before ending any conversation with substantive work, scan for uncaptured decisions. If any, write them before closing.
 
 ### P6: Sub-agent Debrief
 Sub-agents MUST write a brief debrief to memory/YYYY-MM-DD.md before completing. Include: what was done, what was learned, any issues.
+**Recovery:** If a sub-agent fails, times out, or is killed before debriefing, the parent agent writes the debrief on its behalf noting the failure mode. No delegated work should vanish from memory.
 
 ### P7: Log Failures
 When something fails or the user corrects you, immediately append to the daily log with ❌ FAILURE: or 🔧 CORRECTION: tags. Include: what happened, why it failed, what fixed it. Nightly distillation routes these to the right file.
+**Root cause:** Do not just log what happened — log *why* it happened and what would prevent it next time. If it is a systemic issue (missing principle, bad assumption, tool gap), propose a fix immediately.
 
 ---
 
