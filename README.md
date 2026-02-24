@@ -54,6 +54,9 @@ The key: **daily distillation + weekly synthesis + decision capture** means the 
 ## Install
 
 ### Option 1: ClawHub (recommended)
+
+Run these commands from your OpenClaw workspace directory (e.g. `~/clawd`):
+
 ```bash
 clawhub install opencortex
 cd skills/opencortex

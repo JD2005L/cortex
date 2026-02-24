@@ -1,6 +1,6 @@
 #!/bin/bash
 # OpenCortex — Self-Improving Memory Architecture Installer
-# Idempotent: safe to re-run. Won't overwrite existing files.
+# Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
 # --- Pre-flight: check required tools ---
@@ -408,11 +408,11 @@ Before completing, append debrief to memory/YYYY-MM-DD.md.
 Reply with brief summary."
 
     if [ "$DRY_RUN" = "true" ]; then
-      echo "   [DRY RUN] Would run: openclaw cron add --name 'Daily Memory Distillation' --cron '0 10 * * *'"
+      echo "   [DRY RUN] Would run: openclaw cron add --name 'Daily Memory Distillation' --cron '0 3 * * *'"
     else
       openclaw cron add \
         --name "Daily Memory Distillation" \
-        --cron "0 10 * * *" \
+        --cron "0 3 * * *" \
         --tz "$TZ" \
         --model "sonnet" \
         --session "isolated" \
@@ -428,11 +428,11 @@ Reply with brief summary."
   EXISTING=$(openclaw cron list --json 2>/dev/null | grep -c "Weekly Synthesis" || true)
   if [ "$EXISTING" = "0" ]; then
     if [ "$DRY_RUN" = "true" ]; then
-      echo "   [DRY RUN] Would run: openclaw cron add --name 'Weekly Synthesis' --cron '0 12 * * 0'"
+      echo "   [DRY RUN] Would run: openclaw cron add --name 'Weekly Synthesis' --cron '0 5 * * 0'"
     else
     openclaw cron add \
       --name "Weekly Synthesis" \
-      --cron "0 12 * * 0" \
+      --cron "0 5 * * 0" \
       --tz "$TZ" \
       --model "sonnet" \
       --session "isolated" \

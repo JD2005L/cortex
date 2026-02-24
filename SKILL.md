@@ -21,23 +21,25 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 1. **Structures memory** into purpose-specific files instead of one flat dump
 2. **Installs nightly maintenance** that distills daily work into permanent knowledge
 3. **Installs weekly synthesis** that catches patterns across days
-4. **Establishes principles** that enforce good memory habits
-5. **Principle enforcement** — Nightly audits verify tool documentation, decision capture, sub-agent debriefs, failure analysis, and unnecessary deferrals to the user. Nothing slips through the cracks.
+4. **Establishes principles** that enforce good memory habits — and backs them up with nightly audits that verify tool documentation, decision capture, sub-agent debriefs, failure analysis, and unnecessary deferrals to the user. Nothing slips through the cracks.
 6. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting
 7. **Encrypts sensitive data** in an AES-256 vault with key-only references in docs; supports passphrase rotation (`vault.sh rotate`) and validates key names on `vault.sh set`
 8. **Enables safe git backup** with automatic secret scrubbing
 
 ## Installation
 
+**Requires:** [OpenClaw](https://github.com/openclaw/openclaw) 2026.2.x+ already installed. Run these commands from your OpenClaw workspace directory (e.g. `~/clawd`).
+
 ```bash
-# Step 1: Download the skill
+# Step 1: Download the skill files
 clawhub install opencortex
 
-# Step 2: Run the installer
+# Step 2: Run the installer — this actually sets up the memory structure,
+# cron jobs, and files. Step 1 just downloads; this step does the work.
 cd skills/opencortex
 bash scripts/install.sh
 
-# Optional: preview first without changing anything
+# Optional: preview what would be created without changing anything
 bash scripts/install.sh --dry-run
 ```
 
@@ -86,6 +88,7 @@ memory/
 | P5 | Capture Decisions | Record decisions with reasoning; enforced by nightly + weekly audit |
 | P6 | Sub-agent Debrief | Delegated work feeds back to daily log; orphans recovered by distillation |
 | P7 | Log Failures | Tag failures/corrections; root cause analysis enforced by nightly audit |
+| P8 | Check the Shed First | Consult TOOLS.md/INFRA.md/memory before deferring work to user; enforced by nightly audit |
 
 ## Cron Jobs (installed)
 
