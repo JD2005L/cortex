@@ -152,7 +152,12 @@ Live in MEMORY.md under 🔴 PRINCIPLES. Follow them always.
 - memory/projects/*.md — Per-project knowledge
 - memory/runbooks/*.md — Repeatable procedures
 - memory/archive/*.md — Archived daily logs
-- memory/YYYY-MM-DD.md — Today'"'"'s working log'
+- memory/YYYY-MM-DD.md — Today'"'"'s working log
+
+## Health Check
+When the user asks if OpenCortex is installed, working, or wants a status check, run:
+  bash skills/opencortex/scripts/verify.sh
+Share the results and offer to fix any failures.'
 
 create_if_missing "$WORKSPACE/MEMORY.md" '# MEMORY.md — Core Memory
 
@@ -265,7 +270,13 @@ On new session start:
 
 ## Sub-Agent Protocol
 When delegating, always include in task message:
-"Before completing, append a brief debrief to memory/YYYY-MM-DD.md: what you did, what you learned, any issues."'
+"Before completing, append a brief debrief to memory/YYYY-MM-DD.md: what you did, what you learned, any issues."
+
+## Verification
+If the user asks if OpenCortex is installed, working, or wants a health check:
+1. Run: bash skills/opencortex/scripts/verify.sh
+2. Share the results with the user
+3. If any checks fail, offer to re-run the installer: bash skills/opencortex/scripts/install.sh'
 
 if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
   create_if_missing "$WORKSPACE/memory/VOICE.md" '# VOICE.md — How My Human Communicates
