@@ -2,14 +2,18 @@
 name: OpenCortex
 homepage: https://github.com/JD2005L/opencortex
 description: >
-  Self-improving memory architecture for OpenClaw agents. Transforms the default flat memory
-  into a structured, self-maintaining knowledge system that grows smarter over time.
-  Use when: (1) setting up a new OpenClaw instance, (2) user asks to improve/organize memory,
-  (3) user wants the agent to stop forgetting things, (4) bootstrapping a fresh agent with
-  best practices. NOT for: runtime memory_search queries (use built-in memory tools).
-  Triggers: "set up memory", "organize yourself", "stop forgetting", "memory architecture",
-  "self-improving", "cortex", "bootstrap memory", "memory optimization".
-metadata: {"openclaw":{"requires":{"bins":["grep","sed","find"],"optionalBins":["git","gpg","openssl","openclaw","secret-tool","keyctl"]},"env":{"CLAWD_WORKSPACE":{"description":"Workspace directory (defaults to cwd)","required":false},"CLAWD_TZ":{"description":"Timezone for cron scheduling (defaults to UTC)","required":false},"OPENCORTEX_VAULT_PASS":{"description":"Vault passphrase via env var. Prefer system keyring.","required":false,"sensitive":true}},"sensitiveFiles":[".secrets-map",".vault/.passphrase"],"networkAccess":"Optional git push only (off by default, user must enable during install)"}}
+  Self-improving memory architecture for OpenClaw agents. Structured memory files,
+  nightly distillation, weekly synthesis, and enforced principles — so your agent
+  compounds knowledge instead of forgetting it. All sensitive features (voice profiling,
+  infrastructure auto-collection, git push) are OFF by default and require explicit
+  opt-in via environment variable or flag. Safe to install: no network calls during
+  setup, fully auditable bash scripts, isolated cron sessions scoped to workspace only.
+  Use when: (1) setting up a new OpenClaw instance, (2) user asks to improve/organize
+  memory, (3) user wants the agent to stop forgetting things, (4) bootstrapping a fresh
+  agent with best practices. NOT for: runtime memory_search queries (use built-in memory
+  tools). Triggers: "set up memory", "organize yourself", "stop forgetting", "memory
+  architecture", "self-improving", "cortex", "bootstrap memory", "memory optimization".
+metadata: {"openclaw":{"requires":{"bins":["grep","sed","find"],"optionalBins":["git","gpg","openssl","openclaw","secret-tool","keyctl"]},"env":{"CLAWD_WORKSPACE":{"description":"Workspace directory (defaults to cwd)","required":false},"CLAWD_TZ":{"description":"Timezone for cron scheduling (defaults to UTC)","required":false},"OPENCORTEX_VAULT_PASS":{"description":"Vault passphrase via env var. Prefer system keyring.","required":false,"sensitive":true},"OPENCORTEX_VOICE_PROFILE":{"description":"Set to 1 to enable voice profiling in the nightly distillation cron. Off by default.","required":false,"sensitive":false},"OPENCORTEX_INFRA_COLLECT":{"description":"Set to 1 to enable infrastructure auto-collection in the nightly distillation cron. Off by default.","required":false,"sensitive":false},"OPENCORTEX_SCRUB_ALL":{"description":"Set to 1 to scrub all tracked files (not just known text types) during git backup. Off by default.","required":false,"sensitive":false},"OPENCORTEX_ALLOW_FILE_PASSPHRASE":{"description":"Set to 1 to allow vault passphrase stored in a file (.vault/.passphrase). Off by default; prefer system keyring.","required":false,"sensitive":false}},"sensitiveFiles":[".secrets-map",".vault/.passphrase"],"networkAccess":"Optional git push only (off by default, requires --push flag)"}}
 ---
 
 # OpenCortex — Self-Improving Memory Architecture
@@ -24,9 +28,9 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 2. **Installs nightly maintenance** that distills daily work into permanent knowledge
 3. **Installs weekly synthesis** that catches patterns across days
 4. **Establishes principles** that enforce good memory habits — and backs them up with nightly audits that verify tool documentation, decision capture, sub-agent debriefs, failure analysis, and unnecessary deferrals to the user. Nothing slips through the cracks.
-6. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting
+6. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting (opt-in, requires `OPENCORTEX_VOICE_PROFILE=1`)
 7. **Encrypts sensitive data** in an AES-256 vault with key-only references in docs; supports passphrase rotation (`vault.sh rotate`) and validates key names on `vault.sh set`
-8. **Enables safe git backup** with automatic secret scrubbing
+8. **Enables safe git backup** with secret scrubbing (secrets never modified in your live workspace — scrubbed in an isolated copy only)
 
 ## Installation
 
@@ -46,7 +50,7 @@ bash skills/opencortex/scripts/install.sh
 bash skills/opencortex/scripts/install.sh --dry-run
 ```
 
-The installer will ask about optional features (encrypted vault, voice profiling, git backup). It's safe to re-run — it skips anything that already exists. The installer itself makes no network calls — it only creates local files and registers cron jobs.
+The installer will ask about optional features (encrypted vault, voice profiling, infrastructure collection, git backup). It's safe to re-run — it skips anything that already exists. The installer itself makes no network calls — it only creates local files and registers cron jobs.
 
 ```bash
 # 3. Verify everything is working (read-only — checks files and cron jobs, changes nothing)
@@ -60,8 +64,6 @@ The script will:
 - Create directory structure
 - Set up cron jobs (daily distillation, weekly synthesis)
 - Optionally set up git backup with secret scrubbing
-
-The installer also creates `memory/VOICE.md` — a living profile of how your human communicates. The nightly distillation analyzes each day's conversations and builds up vocabulary, tone, phrasing patterns, and decision style. Use this when ghostwriting on their behalf (community posts, emails, social media) — not for regular conversation.
 
 After install, review and customize:
 - `SOUL.md` — personality and identity (make it yours)
@@ -130,13 +132,13 @@ Customize times by editing cron jobs: `openclaw cron list` then `openclaw cron e
 
 If enabled during install, creates:
 - `scripts/git-backup.sh` — auto-commit every 6 hours
-- `scripts/git-scrub-secrets.sh` — replaces secrets with `{{PLACEHOLDER}}` before commit
-- `scripts/git-restore-secrets.sh` — restores secrets after push
+- `scripts/git-scrub-secrets.sh` — replaces secrets in a temp copy before commit (workspace files never touched)
+- `scripts/git-restore-secrets.sh` — utility to restore secrets (kept for manual use)
 - `.secrets-map` — maps secrets to placeholders (gitignored, 600 perms)
 
 Add secrets to `.secrets-map` in format: `actual_secret|{{PLACEHOLDER_NAME}}`
 
-Before each push, `git-backup.sh` verifies no raw secrets remain in tracked files after scrubbing. If any are found, the push is aborted and secrets are restored — nothing reaches the remote.
+Before each push, `git-backup.sh` verifies no raw secrets remain in the scrubbed copy. If any are found, the backup is aborted — nothing reaches the remote.
 
 ## Customization
 

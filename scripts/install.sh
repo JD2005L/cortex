@@ -47,10 +47,13 @@ echo "   direct = Agent documents everything in plain workspace files"
 read -p "   Choose (secure/direct) [secure]: " SECRET_MODE
 SECRET_MODE=$(echo "${SECRET_MODE:-secure}" | tr '[:upper:]' '[:lower:]')
 
+echo ""
 read -p "📝 Enable voice profiling? Analyzes conversation style for ghostwriting. (y/N): " ENABLE_VOICE
 ENABLE_VOICE=$(echo "$ENABLE_VOICE" | tr '[:upper:]' '[:lower:]')
 
-
+echo ""
+read -p "🗺️  Enable infrastructure auto-collection? Cron will route infra details from daily logs to INFRA.md. (y/N): " ENABLE_INFRA
+ENABLE_INFRA=$(echo "$ENABLE_INFRA" | tr '[:upper:]' '[:lower:]')
 
 echo ""
 
@@ -366,7 +369,7 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
    - Project work → memory/projects/ (create new files if needed)
    - New tool descriptions and capabilities → TOOLS.md (names, URLs, what they do)
    - IMPORTANT: Never write passwords, tokens, or secrets into any file. For sensitive values, instruct the user to run: scripts/vault.sh set <key> <value>. Reference in docs as: vault:<key>
-   - Infrastructure changes → INFRA.md
+   - Infrastructure changes → INFRA.md (ONLY if OPENCORTEX_INFRA_COLLECT=1 is set in the environment — otherwise skip infrastructure routing entirely)
    - Principles, lessons → MEMORY.md
    - Scheduled jobs → MEMORY.md jobs table
    - User preferences → USER.md
@@ -381,7 +384,7 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
 2. Distill ALL useful information into the right file:
    - Project work → memory/projects/ (create new files if needed)
    - New tools, APIs, access methods → TOOLS.md
-   - Infrastructure changes → INFRA.md
+   - Infrastructure changes → INFRA.md (ONLY if OPENCORTEX_INFRA_COLLECT=1 is set in the environment — otherwise skip infrastructure routing entirely)
    - Principles, lessons → MEMORY.md
    - Scheduled jobs → MEMORY.md jobs table
    - User preferences → USER.md
@@ -390,24 +393,24 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
 5. Update MEMORY.md index if new files created."
     fi
 
-    # Voice profiling (opt-in)
-    if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
-      CRON_MSG="$CRON_MSG
+    # Voice profiling — only runs if OPENCORTEX_VOICE_PROFILE=1 at runtime
+    CRON_MSG="$CRON_MSG
 
 ## Part 2: Voice Profile
-6. Read memory/VOICE.md. Review today conversations for new patterns:
+ONLY perform this section if OPENCORTEX_VOICE_PROFILE=1 is set in the environment. If not set, skip this section entirely.
+
+6. Read memory/VOICE.md. Review today's conversations for new patterns:
    - New vocabulary, slang, shorthand the user uses
    - How they phrase requests, decisions, reactions
    - Tone shifts in different contexts
    Append new observations to VOICE.md. Do not duplicate existing entries."
-    fi
 
     CRON_MSG="$CRON_MSG
 
 ## Optimization
 - Review memory/projects/ for duplicates, stale info, verbose sections. Fix directly.
 - Review MEMORY.md: verify index accuracy, principles concise, jobs table current.
-- Review TOOLS.md and INFRA.md: remove stale entries, verify descriptions.
+- Review TOOLS.md and (if OPENCORTEX_INFRA_COLLECT=1) INFRA.md: remove stale entries, verify descriptions.
 
 ## Tool Shed Audit (P4 Enforcement)
 - Read TOOLS.md. Scan today daily logs and archived conversation for any CLI tools, APIs, or services that were USED but are NOT documented in TOOLS.md. Add missing entries with: what it is, how to access it, what it can do. This catches tools that slipped through real-time P4 enforcement.
@@ -443,7 +446,15 @@ Reply with brief summary."
         --session "isolated" \
         --timeout-seconds 180 \
         --no-deliver \
-        --message "$CRON_MSG" 2>/dev/null && echo "   ✅ Daily Memory Distillation cron created" || echo "   ⚠️  Failed to create distillation cron"
+        --message "$CRON_MSG" 2>/dev/null && \
+        echo "   ✅ Daily Memory Distillation cron created" && \
+        echo "" && \
+        echo "   📋 Cron job registered: \"Daily Memory Distillation\"" && \
+        echo "      Schedule: 0 3 * * * ($TZ)" && \
+        echo "      Session: isolated (workspace-only)" && \
+        echo "      Review full message: openclaw cron list" && \
+        echo "" || \
+        echo "   ⚠️  Failed to create distillation cron"
     fi
   else
     echo "   ⏭️  Daily Memory Distillation already exists"
@@ -455,15 +466,15 @@ Reply with brief summary."
     if [ "$DRY_RUN" = "true" ]; then
       echo "   [DRY RUN] Would run: openclaw cron add --name 'Weekly Synthesis' --cron '0 5 * * 0'"
     else
-    openclaw cron add \
-      --name "Weekly Synthesis" \
-      --cron "0 5 * * 0" \
-      --tz "$TZ" \
-      --model "sonnet" \
-      --session "isolated" \
-      --timeout-seconds 180 \
-      --no-deliver \
-      --message "You are an AI assistant. Weekly synthesis — higher-altitude review.
+      openclaw cron add \
+        --name "Weekly Synthesis" \
+        --cron "0 5 * * 0" \
+        --tz "$TZ" \
+        --model "sonnet" \
+        --session "isolated" \
+        --timeout-seconds 180 \
+        --no-deliver \
+        --message "You are an AI assistant. Weekly synthesis — higher-altitude review.
 
 IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. If it exists and was created less than 10 minutes ago, wait 30 seconds and retry (up to 3 times). Before starting work, create this lockfile. Remove it when done. This prevents daily and weekly jobs from conflicting.
 
@@ -486,7 +497,15 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
 - Update MEMORY.md runbooks index if new runbooks created.
 
 Before completing, append debrief to memory/YYYY-MM-DD.md.
-Reply with weekly summary." 2>/dev/null && echo "   ✅ Weekly Synthesis cron created" || echo "   ⚠️  Failed to create synthesis cron"
+Reply with weekly summary." 2>/dev/null && \
+        echo "   ✅ Weekly Synthesis cron created" && \
+        echo "" && \
+        echo "   📋 Cron job registered: \"Weekly Synthesis\"" && \
+        echo "      Schedule: 0 5 * * 0 ($TZ)" && \
+        echo "      Session: isolated (workspace-only)" && \
+        echo "      Review full message: openclaw cron list" && \
+        echo "" || \
+        echo "   ⚠️  Failed to create synthesis cron"
     fi
   else
     echo "   ⏭️  Weekly Synthesis already exists"
@@ -535,6 +554,12 @@ if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
     else
       (crontab -l 2>/dev/null; echo "0 */6 * * * $WORKSPACE/scripts/git-backup.sh") | crontab -
       echo "   ✅ Git backup cron added (every 6 hours)"
+      echo ""
+      echo "   📋 Cron job registered: \"Git Backup\""
+      echo "      Schedule: 0 */6 * * * (system cron)"
+      echo "      Session: direct script (no network unless --push flag set)"
+      echo "      Review: crontab -l"
+      echo ""
     fi
   else
     echo "   ⏭️  Git backup cron already exists"
@@ -555,7 +580,41 @@ echo "  2. Edit USER.md — describe your human"
 echo "  3. Edit MEMORY.md — set identity, add projects as you go"
 echo "  4. Edit TOOLS.md — document tools as you discover them"
 echo "  5. Edit INFRA.md — document your infrastructure"
-echo "  6. If using git backup: edit .secrets-map with your actual secrets"
+if [ "$SECRET_MODE" = "secure" ]; then
+  echo "  6. If using git backup: edit .secrets-map with your actual secrets"
+fi
+
+# --- Env var guidance for opt-in features ---
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔑 Opt-in feature environment variables:"
+echo ""
+if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
+  echo "   Voice profiling is enabled in the cron (you said yes)."
+  echo "   To activate it at runtime, set this in your OpenClaw environment:"
+  echo "     export OPENCORTEX_VOICE_PROFILE=1"
+  echo "   Without this variable, the nightly distillation will skip voice profiling."
+  echo ""
+else
+  echo "   Voice profiling: OFF (not requested)"
+  echo "   To enable later: set OPENCORTEX_VOICE_PROFILE=1 in your OpenClaw environment."
+  echo ""
+fi
+if [ "$ENABLE_INFRA" = "y" ] || [ "$ENABLE_INFRA" = "yes" ]; then
+  echo "   Infrastructure auto-collection is enabled in the cron (you said yes)."
+  echo "   To activate it at runtime, set this in your OpenClaw environment:"
+  echo "     export OPENCORTEX_INFRA_COLLECT=1"
+  echo "   Without this variable, the nightly distillation will skip writing to INFRA.md."
+  echo ""
+else
+  echo "   Infrastructure auto-collection: OFF (not requested)"
+  echo "   To enable later: set OPENCORTEX_INFRA_COLLECT=1 in your OpenClaw environment."
+  echo ""
+fi
+echo "   All other optional features (git push, scrub-all, file passphrase):"
+echo "   See README.md → Opt-In Features for details."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
 echo ""
 echo "The system will self-improve from here. Work normally — the nightly"
 echo "distillation will organize everything you learn into permanent memory."
