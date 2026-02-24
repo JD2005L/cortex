@@ -61,9 +61,10 @@ Run these commands from your OpenClaw workspace directory (e.g. `~/clawd`):
 
 ```bash
 clawhub install opencortex
-cd skills/opencortex
-bash scripts/install.sh
+bash skills/opencortex/scripts/install.sh
 ```
+
+**Important:** Run the installer from your workspace root (e.g. `~/clawd`), NOT from inside the skill folder. The installer creates files in your current directory.
 
 ### Option 2: From source
 ```bash

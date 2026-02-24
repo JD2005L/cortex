@@ -35,15 +35,15 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 - [ClawHub CLI](https://clawhub.com)
 
 ```bash
-# 1. Download the skill (from your OpenClaw workspace directory)
+# 1. Download the skill from your OpenClaw workspace directory
+cd ~/clawd    # or wherever your workspace is
 clawhub install opencortex
 
-# 2. Run the installer
-cd skills/opencortex
-bash scripts/install.sh
+# 2. Run the installer FROM YOUR WORKSPACE DIRECTORY (not from inside the skill folder)
+bash skills/opencortex/scripts/install.sh
 
 # Optional: preview what would be created without changing anything
-bash scripts/install.sh --dry-run
+bash skills/opencortex/scripts/install.sh --dry-run
 ```
 
 The installer will ask about optional features (encrypted vault, voice profiling, git backup). It's safe to re-run — it skips anything that already exists. The installer itself makes no network calls — it only creates local files and registers cron jobs.
