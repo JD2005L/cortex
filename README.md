@@ -94,21 +94,21 @@ bash scripts/install.sh --dry-run
 ### Cron Jobs
 | Schedule | Job | Purpose |
 |----------|-----|---------|
-| Daily 3 AM | Memory Distillation | Distill daily logs → permanent knowledge, optimize, check cron spacing |
+| Daily 3 AM | Memory Distillation | Distill daily logs → permanent knowledge, audit tools/decisions/debriefs/failures, optimize |
 | Sunday 5 AM | Weekly Synthesis | Find patterns, recurring problems, unfinished threads, validate decisions; auto-detects repeated procedures and creates runbooks |
 
 Both jobs use a shared lockfile (`/tmp/opencortex-distill.lock`) to prevent conflicts when they run near each other.
 
-### Principles (P1–P6)
+### Principles (P1–P7)
 | # | Principle | Purpose |
 |---|-----------|---------|
 | P1 | Delegate First | Sub-agent delegation by default |
 | P2 | Write It Down | Never "mentally note" — commit to files |
 | P3 | Ask Before External | Confirm before public/destructive actions |
-| P4 | Tool Shed | Document every capability with abilities description |
-| P5 | Capture Decisions | Record decisions with reasoning, never re-ask |
-| P6 | Sub-agent Debrief | Delegated work feeds learnings back to daily log |
-| P7 | Log Failures | Tag failures/corrections with ❌/🔧 for distillation routing |
+| P4 | Tool Shed | Document + proactively create tools; enforced by nightly audit |
+| P5 | Capture Decisions | Record decisions with reasoning; enforced by nightly + weekly audit |
+| P6 | Sub-agent Debrief | Delegated work feeds back to daily log; orphans recovered by distillation |
+| P7 | Log Failures | Tag failures/corrections; root cause analysis enforced by nightly audit |
 
 ### Voice Profile (`memory/VOICE.md`)
 The nightly distillation analyzes each day's conversations and builds a living profile of how your human communicates — vocabulary, tone, phrasing, decision style. Used when ghostwriting on their behalf (community posts, emails, social media). Not used for regular agent conversation.
@@ -212,7 +212,7 @@ Two cron jobs are created (both run as isolated OpenClaw sessions):
 
 | Job | What it reads | What it writes | Network access |
 |-----|--------------|----------------|----------------|
-| Daily Distillation | `memory/*.md`, workspace `*.md` | `memory/projects/`, `MEMORY.md`, `TOOLS.md`, `INFRA.md`, `USER.md`, `memory/VOICE.md` | None |
+| Daily Distillation | `memory/*.md`, workspace `*.md` | `memory/projects/`, `MEMORY.md`, `TOOLS.md`, `INFRA.md`, `USER.md`, `memory/VOICE.md`, `memory/YYYY-MM-DD.md` (audit outputs: uncaptured decisions, debrief recoveries, root cause analyses) | None |
 | Weekly Synthesis | `memory/archive/*.md`, `memory/projects/*.md` | `memory/archive/weekly-*.md`, project files, `memory/runbooks/` | None |
 
 Both jobs acquire a lockfile (`/tmp/opencortex-distill.lock`) before running, so concurrent execution is safe if the daily and weekly jobs overlap.

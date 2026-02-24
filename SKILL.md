@@ -21,9 +21,10 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 2. **Installs nightly maintenance** that distills daily work into permanent knowledge
 3. **Installs weekly synthesis** that catches patterns across days
 4. **Establishes principles** that enforce good memory habits
-5. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting
-6. **Encrypts sensitive data** in an AES-256 vault with key-only references in docs; supports passphrase rotation (`vault.sh rotate`) and validates key names on `vault.sh set`
-7. **Enables safe git backup** with automatic secret scrubbing
+5. **Principle enforcement** — Nightly audits verify tool documentation, decision capture, sub-agent debriefs, and failure analysis. Nothing slips through the cracks.
+6. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting
+7. **Encrypts sensitive data** in an AES-256 vault with key-only references in docs; supports passphrase rotation (`vault.sh rotate`) and validates key names on `vault.sh set`
+8. **Enables safe git backup** with automatic secret scrubbing
 
 ## Installation
 
@@ -73,16 +74,16 @@ memory/
 | P1 | Delegate First | Assess tasks for sub-agent delegation; stay available |
 | P2 | Write It Down | Commit to files, not mental notes |
 | P3 | Ask Before External | Confirm before emails, public posts, destructive ops |
-| P4 | Tool Shed | Document every tool/API with goal-oriented abilities description |
-| P5 | Capture Decisions | Record decisions with reasoning; never re-ask |
-| P6 | Sub-agent Debrief | Sub-agents write learnings to daily log before completing |
-| P7 | Log Failures | Tag failures/corrections in daily log for distillation routing |
+| P4 | Tool Shed | Document + proactively create tools; enforced by nightly audit |
+| P5 | Capture Decisions | Record decisions with reasoning; enforced by nightly + weekly audit |
+| P6 | Sub-agent Debrief | Delegated work feeds back to daily log; orphans recovered by distillation |
+| P7 | Log Failures | Tag failures/corrections; root cause analysis enforced by nightly audit |
 
 ## Cron Jobs (installed)
 
 | Schedule | Name | What it does |
 |----------|------|-------------|
-| Daily 3 AM (local) | Distillation | Reads daily logs → distills into project/tools/infra files → optimizes → archives |
+| Daily 3 AM (local) | Distillation | Reads daily logs → distills into project/tools/infra files → audits tools/decisions/debriefs/failures → optimizes → archives |
 | Weekly Sunday 5 AM | Synthesis | Reviews week for patterns, recurring problems, unfinished threads, decisions; auto-creates runbooks from repeated procedures |
 
 Both jobs use a shared lockfile (`/tmp/opencortex-distill.lock`) to prevent conflicts when daily and weekly runs overlap.

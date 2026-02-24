@@ -373,6 +373,16 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
 ## Tool Shed Audit (P4 Enforcement)
 - Read TOOLS.md. Scan today daily logs and archived conversation for any CLI tools, APIs, or services that were USED but are NOT documented in TOOLS.md. Add missing entries with: what it is, how to access it, what it can do. This catches tools that slipped through real-time P4 enforcement.
 
+## Decision Audit (P5 Enforcement)
+- Scan today's daily logs for any decisions, preferences, or architectural directions stated by the user that are NOT captured in project files, MEMORY.md, or USER.md. Decisions include explicit choices, stated preferences, architectural directions, and workflow rules.
+- For each uncaptured decision, write it to the appropriate file. Format: **Decision:** [what] — [why] (date)
+
+## Debrief Recovery (P6 Enforcement)
+- Check today's daily logs for any sub-agent delegations. For each, verify a debrief entry exists. If a sub-agent was spawned but no debrief appears (failed, timed out, or forgotten), write a recovery debrief noting what was attempted and that the debrief was recovered by distillation.
+
+## Failure Root Cause (P7 Enforcement)
+- Scan today's daily logs for ❌ FAILURE: or 🔧 CORRECTION: entries. For each, verify a root cause analysis exists (not just what happened, but WHY and what prevents recurrence). If missing, add the root cause analysis.
+
 ## Cron Health
 - Run openclaw cron list and crontab -l. Verify no two jobs within 15 minutes. Fix MEMORY.md jobs table if out of sync.
 
@@ -422,6 +432,8 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
    c. Cross-project connections → add cross-references
    d. Decisions this week → ensure captured with reasoning
    e. New capabilities → verify in TOOLS.md with abilities (P4)
+   f. **Runbook detection** — identify any multi-step procedure (3+ steps) performed more than once this week, or likely to recur. Check if a runbook exists in memory/runbooks/. If not, create one with clear steps a sub-agent could follow. Update MEMORY.md runbooks index.
+   g. **Principle health** — read MEMORY.md principles section. Verify each principle has: clear intent, enforcement mechanism, and that the enforcement is actually reflected in the distillation cron. Flag any principle without enforcement.
 4. Write weekly summary to memory/archive/weekly-YYYY-MM-DD.md.
 
 ## Runbook Detection
