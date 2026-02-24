@@ -69,7 +69,7 @@ bash scripts/install.sh
 
 **Important:** `clawhub install` downloads the skill files. You must then run `bash scripts/install.sh` to set up the memory architecture, create cron jobs, and configure features.
 
-The installer is idempotent — safe to re-run. It won't overwrite existing files. Pass `--dry-run` to preview what would be created without writing anything:
+The installer is safe to re-run — it skips anything that already exists. Pass `--dry-run` to preview what would be created without writing anything:
 
 ```bash
 bash scripts/install.sh --dry-run
