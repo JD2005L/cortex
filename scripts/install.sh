@@ -189,6 +189,10 @@ Sub-agents MUST write a brief debrief to memory/YYYY-MM-DD.md before completing.
 When something fails or the user corrects you, immediately append to the daily log with ❌ FAILURE: or 🔧 CORRECTION: tags. Include: what happened, why it failed, what fixed it. Nightly distillation routes these to the right file.
 **Root cause:** Do not just log what happened — log *why* it happened and what would prevent it next time. If it is a systemic issue (missing principle, bad assumption, tool gap), propose a fix immediately.
 
+### P8: Check the Shed First
+Before telling the user you cannot do something, or asking them to do it manually, CHECK your resources: TOOLS.md, INFRA.md, memory/projects/, runbooks, and any bridge docs. If a tool, API, credential, or access method exists that could accomplish the task — use it. The shed exists so you do not make the user do work you are equipped to handle.
+**Enforcement:** Nightly audit scans for instances where the agent deferred work to the user that could have been done via documented tools.
+
 ---
 
 ## Identity
@@ -390,6 +394,9 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
 
 ## Debrief Recovery (P6 Enforcement)
 - Check today's daily logs for any sub-agent delegations. For each, verify a debrief entry exists. If a sub-agent was spawned but no debrief appears (failed, timed out, or forgotten), write a recovery debrief noting what was attempted and that the debrief was recovered by distillation.
+
+## Shed Deferral Audit (P8 Enforcement)
+- Scan today's daily logs for instances where the agent told the user to do something manually, gave them commands to run, or said it could not do something. Cross-reference with TOOLS.md, INFRA.md, and memory/ to check if a documented tool or access method existed that could have handled it. Flag any unnecessary deferrals.
 
 ## Failure Root Cause (P7 Enforcement)
 - Scan today's daily logs for ❌ FAILURE: or 🔧 CORRECTION: entries. For each, verify a root cause analysis exists (not just what happened, but WHY and what prevents recurrence). If missing, add the root cause analysis.
