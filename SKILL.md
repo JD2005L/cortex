@@ -133,9 +133,7 @@ Customize times by editing cron jobs: `openclaw cron list` then `openclaw cron e
 ## Git Backup (optional)
 
 If enabled during install, creates:
-- `scripts/git-backup.sh` — auto-commit every 6 hours
-- `scripts/git-scrub-secrets.sh` — replaces secrets in a temp copy before commit (workspace files never touched)
-- `scripts/git-restore-secrets.sh` — utility to restore secrets (kept for manual use)
+- `scripts/git-backup.sh` — auto-commit every 6 hours, scrubs secrets in an isolated temp copy (workspace files never modified)
 - `.secrets-map` — maps secrets to placeholders (gitignored, 600 perms)
 
 Add secrets to `.secrets-map` in format: `actual_secret|{{PLACEHOLDER_NAME}}`

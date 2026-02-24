@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="2.8.4"
+OPENCORTEX_VERSION="2.8.5"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -596,7 +596,7 @@ if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
 
   # Copy bundled scripts (fully inspectable in the skill package)
   SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
-  for script in git-backup.sh git-scrub-secrets.sh git-restore-secrets.sh; do
+  for script in git-backup.sh; do
     if [ -f "$SKILL_DIR/$script" ]; then
       if [ "$DRY_RUN" = "true" ]; then
         echo "   [DRY RUN] Would copy: $SKILL_DIR/$script → $WORKSPACE/scripts/$script"
