@@ -95,6 +95,23 @@ bash scripts/install.sh --dry-run
 4. Edit `TOOLS.md` — document tools as you discover them
 5. If using git backup: edit `.secrets-map` with your secrets
 
+## Update
+
+Run these from your workspace root (e.g. `~/clawd`):
+
+```bash
+# 1. Download the latest version
+clawhub install opencortex --force
+
+# 2. Apply updates to your workspace (cron jobs, new principles, scripts)
+bash skills/opencortex/scripts/update.sh
+
+# 3. Verify everything is working (read-only)
+bash skills/opencortex/scripts/verify.sh
+```
+
+The update script is non-destructive — it only adds missing content (new principles, helper scripts) and refreshes cron job messages to the latest templates. It never overwrites files you've customized. Run verify.sh afterwards to confirm everything is healthy.
+
 ## What Gets Installed
 
 ### Files (created only if missing)

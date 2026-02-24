@@ -157,7 +157,14 @@ Live in MEMORY.md under 🔴 PRINCIPLES. Follow them always.
 ## Health Check
 When the user asks if OpenCortex is installed, working, or wants a status check, run:
   bash skills/opencortex/scripts/verify.sh
-Share the results and offer to fix any failures.'
+Share the results and offer to fix any failures.
+
+## Updates
+When the user asks to update OpenCortex or check for updates:
+1. Run: clawhub install opencortex --force
+2. Run: bash skills/opencortex/scripts/update.sh
+3. Run: bash skills/opencortex/scripts/verify.sh
+Share the results with the user.'
 
 create_if_missing "$WORKSPACE/MEMORY.md" '# MEMORY.md — Core Memory
 
@@ -276,7 +283,14 @@ When delegating, always include in task message:
 If the user asks if OpenCortex is installed, working, or wants a health check:
 1. Run: bash skills/opencortex/scripts/verify.sh
 2. Share the results with the user
-3. If any checks fail, offer to re-run the installer: bash skills/opencortex/scripts/install.sh'
+3. If any checks fail, offer to re-run the installer: bash skills/opencortex/scripts/install.sh
+
+## Updates
+When the user asks to update OpenCortex or check for updates:
+1. Run: clawhub install opencortex --force
+2. Run: bash skills/opencortex/scripts/update.sh
+3. Run: bash skills/opencortex/scripts/verify.sh
+Share the results with the user.'
 
 if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
   create_if_missing "$WORKSPACE/memory/VOICE.md" '# VOICE.md — How My Human Communicates

@@ -69,6 +69,21 @@ After install, review and customize:
 - `MEMORY.md` — principles (add/remove as needed)
 - `.secrets-map` — add your actual secrets for git scrubbing
 
+## Updating
+
+```bash
+# 1. Download the latest version (run from workspace root)
+clawhub install opencortex --force
+
+# 2. Apply updates to your workspace (cron jobs, new principles, scripts)
+bash skills/opencortex/scripts/update.sh
+
+# 3. Verify everything is working (read-only)
+bash skills/opencortex/scripts/verify.sh
+```
+
+The update script is non-destructive — it only adds missing content and updates cron job messages to the latest templates. It never overwrites files you've customized. Run verify.sh afterwards (read-only) to confirm everything is healthy.
+
 ## Architecture
 
 ```
@@ -110,8 +125,6 @@ memory/
 Both jobs use a shared lockfile (`/tmp/opencortex-distill.lock`) to prevent conflicts when daily and weekly runs overlap.
 
 Customize times by editing cron jobs: `openclaw cron list` then `openclaw cron edit <id> --cron "..."`.
-
-To update OpenCortex manually: `clawhub update opencortex`
 
 ## Git Backup (optional)
 
