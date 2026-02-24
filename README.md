@@ -18,7 +18,7 @@ OpenCortex transforms your agent into one that **gets smarter every day** throug
 - **Nightly distillation** — Daily work automatically distilled into permanent knowledge
 - **Weekly synthesis** — Pattern detection across days catches recurring problems and unfinished threads
 - **Enforced principles** — Habits that prevent knowledge loss (decision capture, tool documentation, sub-agent debriefs)
-- **Encrypted vault** — AES-256 encrypted secret storage with key-only references in docs
+- **Encrypted vault** — AES-256 encrypted secret storage with system keyring support (secret-tool, macOS Keychain, keyctl) — passphrase never needs to touch disk
 - **Voice profiling** — Learns how your human communicates for authentic ghostwriting
 - **Safe git backup** — Automatic secret scrubbing so credentials never hit your repo
 
@@ -163,7 +163,15 @@ No external downloads, no package installs, no network calls during installation
 
 OpenCortex declares no required environment variables, API keys, or config files. The cron jobs reference `--model "sonnet"` which is resolved by your existing OpenClaw gateway — OpenCortex never sees or handles model provider keys. The P4 (Tool Shed) principle guides the *agent* to document tools it encounters during conversation — this is agent behavior, not skill behavior. If you prefer metadata-only documentation in TOOLS.md, instruct your agent accordingly.
 
-**Vault security:** Secrets encrypted at rest via GPG symmetric encryption (AES-256). The symmetric passphrase is stored in `.vault/.passphrase` with 600 permissions. The passphrase is generated locally by `openssl rand` during `vault init` and never transmitted externally. To rotate the passphrase, run `scripts/vault.sh rotate` — it re-encrypts all secrets in place with a new passphrase. Key names are validated on `vault.sh set`: alphanumeric and underscores only, must start with a letter or underscore.
+**Vault security:** Secrets encrypted at rest via GPG symmetric encryption (AES-256). The vault passphrase is stored in the **best available backend** (auto-detected at init):
+
+1. **secret-tool** — Linux system keyring (GNOME/KDE) — passphrase never on disk
+2. **macOS Keychain** — native macOS secret store — passphrase never on disk
+3. **keyctl** — Linux kernel keyring — passphrase in memory only
+4. **Environment variable** — `OPENCORTEX_VAULT_PASS` — no file needed
+5. **File fallback** — `.vault/.passphrase` (mode 600) — only if no keyring available
+
+To migrate an existing file-based passphrase to a system keyring: `scripts/vault.sh migrate`. To check your current backend: `scripts/vault.sh backend`. Passphrase rotation: `scripts/vault.sh rotate` re-encrypts all secrets with a new passphrase. Key names validated on set (alphanumeric + underscores only).
 
 ### Persistence & Privilege
 
@@ -241,6 +249,7 @@ OpenCortex contains **zero network operations**. No telemetry, no phone-home, no
 |---------|--------|
 | Required API keys/env vars | **None.** Model access handled by OpenClaw gateway. |
 | Raw secrets in TOOLS.md | **Prevented in secure mode.** Vault stores encrypted values, TOOLS.md gets `vault:<key>` references only. |
+| Vault passphrase on disk | **Avoided when possible.** Auto-detects system keyring (secret-tool, macOS Keychain, keyctl). File fallback only if no keyring available. Run `vault.sh migrate` to move off file. |
 | Git scrubbing reliability | **Opt-in, manual .secrets-map, auditable scripts. Pre-push verification aborts if secrets detected.** Test before use. |
 | Root workspace default | **Configurable via `CLAWD_WORKSPACE`.** |
 | Autonomous file writes | **Workspace-only.** No system files touched. |
