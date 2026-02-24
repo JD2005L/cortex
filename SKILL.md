@@ -49,9 +49,11 @@ bash skills/opencortex/scripts/install.sh --dry-run
 The installer will ask about optional features (encrypted vault, voice profiling, git backup). It's safe to re-run — it skips anything that already exists. The installer itself makes no network calls — it only creates local files and registers cron jobs.
 
 ```bash
-# 3. Verify everything is working
+# 3. Verify everything is working (read-only — checks files and cron jobs, changes nothing)
 bash skills/opencortex/scripts/verify.sh
 ```
+
+You can also ask your OpenClaw agent "is OpenCortex working?" — it knows how to run the verification and share results.
 
 The script will:
 - Create the file hierarchy (non-destructively — won't overwrite existing files)

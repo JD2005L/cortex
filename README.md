@@ -67,9 +67,11 @@ bash skills/opencortex/scripts/install.sh
 **Important:** Run the installer from your workspace root (e.g. `~/clawd`), NOT from inside the skill folder. The installer creates files in your current directory.
 
 ```bash
-# Verify everything is working
+# Verify everything is working (read-only — checks files and cron jobs, changes nothing)
 bash skills/opencortex/scripts/verify.sh
 ```
+
+You can also ask your OpenClaw agent "is OpenCortex working?" — it knows how to run the verification and share results.
 
 ### Option 2: From source
 ```bash
