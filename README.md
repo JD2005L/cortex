@@ -55,7 +55,7 @@ The key: **daily distillation + weekly synthesis + decision capture** means the 
 
 ### Option 1: ClawHub (recommended)
 
-**Prerequisites:** `npm install -g openclaw` and `npm install -g clawhub` (requires Node.js 18+)
+**Prerequisites:** [OpenClaw](https://github.com/openclaw/openclaw) 2026.2.x+ and [ClawHub CLI](https://clawhub.com) (install separately if needed)
 
 Run these commands from your OpenClaw workspace directory (e.g. `~/clawd`):
 
