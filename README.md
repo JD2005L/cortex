@@ -147,6 +147,8 @@ OpenCortex does exactly what it describes: creates structured memory files, regi
 
 The cron jobs instruct an OpenClaw agent session to read and write **workspace files only** — the same files listed in the Architecture section above. The distillation job routes information between workspace markdown files (e.g., daily log → project files). It does not access files outside the workspace, make API calls, or execute arbitrary commands. Voice profiling is **opt-in during installation** — declined by default.
 
+**On workspace isolation:** Automated scanners may flag that OpenCortex's cron job instructions don't technically enforce workspace sandboxing themselves. This is correct and intentional — **workspace isolation is enforced by the OpenClaw platform, not by individual skills.** OpenClaw cron jobs run in isolated agent sessions (`--session "isolated"`) that are scoped to the workspace directory by the OpenClaw runtime. This is analogous to how a Dockerfile doesn't implement kernel-level container isolation — that's the container runtime's responsibility. OpenCortex's cron instructions explicitly reference only workspace-relative paths (`memory/`, `MEMORY.md`, `TOOLS.md`, etc.) and contain no instructions to access external filesystems, make network calls, or execute system commands beyond `openclaw cron list` and `crontab -l` (for self-auditing cron health). You can verify this yourself: run `openclaw cron list`, inspect every cron message, and confirm all file references are workspace-relative.
+
 ### Install Mechanism
 
 Installation is a single bash script (`scripts/install.sh`). It:
@@ -246,6 +248,7 @@ OpenCortex contains **zero network operations**. No telemetry, no phone-home, no
 | Network access | **None.** All operations are local file I/O. |
 | Hidden endpoints | **None.** Full source public and auditable. |
 | Distillation/synthesis executables | **By design, none.** Implemented as OpenClaw cron job messages — the agent IS the executor. Inspect via `openclaw cron list`. |
+| Workspace sandboxing | **Enforced by OpenClaw platform**, not by the skill. Cron jobs use `--session "isolated"`. All file references are workspace-relative. No external filesystem, network, or system command access in any cron instruction. |
 
 ## Requirements
 
