@@ -53,9 +53,11 @@ The key: **daily distillation + weekly synthesis + decision capture** means the 
 
 ## Install
 
-### Option 1: OpenClaw Skill
+### Option 1: ClawHub (recommended)
 ```bash
-openclaw skill install opencortex.skill
+clawhub install opencortex
+cd skills/opencortex
+bash scripts/install.sh
 ```
 
 ### Option 2: From source
@@ -64,6 +66,8 @@ git clone https://github.com/JD2005L/opencortex.git
 cd opencortex
 bash scripts/install.sh
 ```
+
+**Important:** `clawhub install` downloads the skill files. You must then run `bash scripts/install.sh` to set up the memory architecture, create cron jobs, and configure features.
 
 The installer is idempotent — safe to re-run. It won't overwrite existing files. Pass `--dry-run` to preview what would be created without writing anything:
 
