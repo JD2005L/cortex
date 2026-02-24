@@ -163,6 +163,7 @@ Emails, public posts, destructive ops — get confirmation first.
 
 ### P4: Tool Shed
 All tools, APIs, access methods, and capabilities SHALL be documented in TOOLS.md with goal-oriented abilities descriptions. When given a new tool during work, immediately add it.
+**Creation:** When you access a new system, API, or resource more than once — or when given access to something that will clearly recur — proactively create the tool entry, bridge doc, or helper script. Do not wait to be asked. The bar is: if future-me would need to figure this out again, build the tool now.
 **Enforcement:** After using any CLI tool, API, or service — before ending the task — verify it exists in TOOLS.md. If not, add it immediately. Do not defer to distillation.
 
 ### P5: Capture Decisions
