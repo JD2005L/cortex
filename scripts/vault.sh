@@ -113,17 +113,6 @@ _ensure_vault() {
   fi
 }
 
-_decrypt() {
-  local pass=$(_get_passphrase)
-  echo "$pass" | gpg --batch --yes --passphrase-fd 0 --quiet --decrypt "$VAULT_FILE" 2>/dev/null
-}
-
-_encrypt() {
-  local content="$1"
-  local pass=$(_get_passphrase)
-  echo "$content" | gpg --batch --yes --passphrase-fd 0 --quiet --symmetric --cipher-algo AES256 --output "$VAULT_FILE" 2>/dev/null <<< "$pass"
-}
-
 # Passphrase passed via fd 3 to avoid exposure in process list
 _encrypt() {
   local content="$1"
