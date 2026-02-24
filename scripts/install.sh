@@ -3,21 +3,32 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="2.8.2"
+OPENCORTEX_VERSION="2.8.4"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
 VERSION_FILE="$WORKSPACE/.opencortex-version"
 
+# Detect existing install: version file OR core files present
+INSTALLED_VERSION=""
 if [ -f "$VERSION_FILE" ]; then
   INSTALLED_VERSION=$(cat "$VERSION_FILE" 2>/dev/null | tr -d '[:space:]')
+elif [ -f "$WORKSPACE/MEMORY.md" ] && grep -q "PRINCIPLES" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
+  INSTALLED_VERSION="unknown"
+fi
+
+if [ -n "$INSTALLED_VERSION" ]; then
   if [ "$INSTALLED_VERSION" = "$OPENCORTEX_VERSION" ]; then
     echo "✅ OpenCortex v$OPENCORTEX_VERSION is already installed."
     echo "   To check health: bash skills/opencortex/scripts/verify.sh"
     echo "   To force reinstall: delete $VERSION_FILE and re-run."
     exit 0
-  elif [ -n "$INSTALLED_VERSION" ]; then
-    echo "🔄 OpenCortex update available: v$INSTALLED_VERSION → v$OPENCORTEX_VERSION"
+  else
+    if [ "$INSTALLED_VERSION" = "unknown" ]; then
+      echo "🔄 OpenCortex detected (version unknown) — latest is v$OPENCORTEX_VERSION"
+    else
+      echo "🔄 OpenCortex update available: v$INSTALLED_VERSION → v$OPENCORTEX_VERSION"
+    fi
     echo ""
     echo "   Options:"
     echo "   1) Update — applies new features without overwriting your files (recommended)"

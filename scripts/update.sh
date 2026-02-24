@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="2.8.2"
+OPENCORTEX_VERSION="2.8.4"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -328,6 +328,43 @@ echo ""
 # ─────────────────────────────────────────────────────────────────────────────
 # Summary
 # ─────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# New optional features (offer if not already set up)
+# ─────────────────────────────────────────────────────────────────────────────
+WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
+SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Metrics
+if ! crontab -l 2>/dev/null | grep -q "metrics.sh"; then
+  echo ""
+  read -p "📊 New feature: daily metrics tracking (knowledge growth over time). Enable? (y/N): " ENABLE_METRICS
+  ENABLE_METRICS=$(echo "$ENABLE_METRICS" | tr '[:upper:]' '[:lower:]')
+  if [ "$ENABLE_METRICS" = "y" ] || [ "$ENABLE_METRICS" = "yes" ]; then
+    if [ -f "$SKILL_DIR/metrics.sh" ]; then
+      if [ "$DRY_RUN" != "true" ]; then
+        cp "$SKILL_DIR/metrics.sh" "$WORKSPACE/scripts/metrics.sh"
+        chmod +x "$WORKSPACE/scripts/metrics.sh"
+        (crontab -l 2>/dev/null; echo "30 23 * * * $WORKSPACE/scripts/metrics.sh --collect") | crontab -
+        "$WORKSPACE/scripts/metrics.sh" --collect
+        echo "   ✅ Metrics enabled — daily snapshots at 11:30 PM"
+        echo "   📊 First snapshot captured. View with: bash scripts/metrics.sh --report"
+        UPDATED=$((UPDATED + 1))
+      else
+        echo "   [DRY RUN] Would enable metrics tracking"
+      fi
+    fi
+  fi
+else
+  # Update metrics script if it exists
+  if [ -f "$SKILL_DIR/metrics.sh" ] && [ -f "$WORKSPACE/scripts/metrics.sh" ]; then
+    if [ "$DRY_RUN" != "true" ]; then
+      cp "$SKILL_DIR/metrics.sh" "$WORKSPACE/scripts/metrics.sh"
+      chmod +x "$WORKSPACE/scripts/metrics.sh"
+      echo "   📊 Metrics script updated to latest version"
+    fi
+  fi
+fi
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "   ✅ Updated: $UPDATED"
 echo "   ⏭️  Skipped (already current): $SKIPPED"
