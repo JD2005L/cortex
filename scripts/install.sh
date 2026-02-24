@@ -382,6 +382,7 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
 
 ## Tool Shed Audit (P4 Enforcement)
 - Read TOOLS.md. Scan today daily logs and archived conversation for any CLI tools, APIs, or services that were USED but are NOT documented in TOOLS.md. Add missing entries with: what it is, how to access it, what it can do. This catches tools that slipped through real-time P4 enforcement.
+- For tools that ARE already in TOOLS.md, check if today's logs reveal any gotchas, failure modes, flags, or usage notes not yet captured in the tool entry. Update existing entries with warnings or corrected usage patterns. Incomplete tool docs are as dangerous as missing ones.
 
 ## Decision Audit (P5 Enforcement)
 - Scan today's daily logs for any decisions, preferences, or architectural directions stated by the user that are NOT captured in project files, MEMORY.md, or USER.md. Decisions include explicit choices, stated preferences, architectural directions, and workflow rules.
