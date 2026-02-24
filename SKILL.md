@@ -16,6 +16,8 @@ metadata: {"openclaw":{"requires":{"bins":["grep","sed","find"],"optionalBins":[
 
 Transform a default OpenClaw agent into one that compounds knowledge daily.
 
+📦 [Full source on GitHub](https://github.com/JD2005L/opencortex) — review the code, file issues, or contribute.
+
 ## What This Does
 
 1. **Structures memory** into purpose-specific files instead of one flat dump
