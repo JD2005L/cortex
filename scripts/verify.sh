@@ -9,7 +9,10 @@ FAIL=0
 WARN=0
 
 echo "🔍 OpenCortex Installation Verification"
+INSTALLED_VER="unknown"
+[ -f "$WORKSPACE/.opencortex-version" ] && INSTALLED_VER="v$(cat "$WORKSPACE/.opencortex-version" | tr -d '[:space:]')"
 echo "   Workspace: $WORKSPACE"
+echo "   Version:   $INSTALLED_VER"
 echo ""
 
 check() {

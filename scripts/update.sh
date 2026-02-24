@@ -6,6 +6,8 @@
 
 set -euo pipefail
 
+OPENCORTEX_VERSION="2.8.2"
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
 # ─────────────────────────────────────────────────────────────────────────────
@@ -334,7 +336,10 @@ echo ""
 if [ "$DRY_RUN" = "true" ]; then
   echo "   Dry run complete. Re-run without --dry-run to apply changes."
 else
-  echo "   Update complete. Run verify.sh to confirm everything is healthy:"
+  # Update version marker
+  WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
+  echo "$OPENCORTEX_VERSION" > "$WORKSPACE/.opencortex-version"
+  echo "   Update complete (v$OPENCORTEX_VERSION). Run verify.sh to confirm everything is healthy:"
   echo "   bash skills/opencortex/scripts/verify.sh"
 fi
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

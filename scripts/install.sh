@@ -3,6 +3,48 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
+OPENCORTEX_VERSION="2.8.2"
+
+# --- Version check: detect existing install and offer update ---
+WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
+VERSION_FILE="$WORKSPACE/.opencortex-version"
+
+if [ -f "$VERSION_FILE" ]; then
+  INSTALLED_VERSION=$(cat "$VERSION_FILE" 2>/dev/null | tr -d '[:space:]')
+  if [ "$INSTALLED_VERSION" = "$OPENCORTEX_VERSION" ]; then
+    echo "✅ OpenCortex v$OPENCORTEX_VERSION is already installed."
+    echo "   To check health: bash skills/opencortex/scripts/verify.sh"
+    echo "   To force reinstall: delete $VERSION_FILE and re-run."
+    exit 0
+  elif [ -n "$INSTALLED_VERSION" ]; then
+    echo "🔄 OpenCortex update available: v$INSTALLED_VERSION → v$OPENCORTEX_VERSION"
+    echo ""
+    echo "   Options:"
+    echo "   1) Update — applies new features without overwriting your files (recommended)"
+    echo "   2) Full reinstall — re-runs the installer from scratch"
+    echo "   3) Cancel"
+    echo ""
+    read -p "   Choose (1/2/3) [1]: " UPDATE_CHOICE
+    UPDATE_CHOICE="${UPDATE_CHOICE:-1}"
+    case "$UPDATE_CHOICE" in
+      1)
+        SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+        if [ -f "$SKILL_DIR/update.sh" ]; then
+          echo ""
+          bash "$SKILL_DIR/update.sh"
+          echo "$OPENCORTEX_VERSION" > "$VERSION_FILE"
+          echo "✅ Version updated to v$OPENCORTEX_VERSION"
+          exit 0
+        else
+          echo "⚠️  update.sh not found — falling through to full install."
+        fi
+        ;;
+      3) echo "Cancelled."; exit 0 ;;
+      *) echo "Proceeding with full install..." ;;
+    esac
+  fi
+fi
+
 # --- Pre-flight: check required tools ---
 REQUIRED_TOOLS=(grep sed find)
 OPTIONAL_TOOLS=(openclaw git gpg)
@@ -636,9 +678,14 @@ else
   echo "   Skipped metrics tracking (enable later: copy scripts/metrics.sh and add to crontab)"
 fi
 
+# --- Write version marker ---
+if [ "$DRY_RUN" != "true" ]; then
+  echo "$OPENCORTEX_VERSION" > "$VERSION_FILE"
+fi
+
 # --- Done ---
 echo ""
-echo "🧠 OpenCortex installed successfully!"
+echo "🧠 OpenCortex v$OPENCORTEX_VERSION installed successfully!"
 echo ""
 echo "Next steps:"
 echo "  1. Edit SOUL.md — make it yours"
