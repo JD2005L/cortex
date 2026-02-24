@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="2.8.5"
+OPENCORTEX_VERSION="2.8.6"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -511,7 +511,6 @@ Reply with brief summary."
         --name "Daily Memory Distillation" \
         --cron "0 3 * * *" \
         --tz "$TZ" \
-        --model "sonnet" \
         --session "isolated" \
         --timeout-seconds 180 \
         --no-deliver \
@@ -539,7 +538,6 @@ Reply with brief summary."
         --name "Weekly Synthesis" \
         --cron "0 5 * * 0" \
         --tz "$TZ" \
-        --model "sonnet" \
         --session "isolated" \
         --timeout-seconds 180 \
         --no-deliver \

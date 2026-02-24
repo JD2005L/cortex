@@ -208,7 +208,7 @@ The installer (`scripts/install.sh`) is a single bash script that:
 
 ### Credentials
 
-OpenCortex declares **no required API keys or environment variables**. The cron jobs specify `--model "sonnet"` which is resolved by your existing OpenClaw gateway — OpenCortex never sees or handles model provider keys.
+OpenCortex declares **no required API keys or environment variables**. The cron jobs use your gateway's default model — OpenCortex never sees or handles model provider keys. Any model capable of reading and writing markdown files will work.
 
 Optional environment variables (all off by default):
 
