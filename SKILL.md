@@ -4,7 +4,8 @@ homepage: https://github.com/JD2005L/opencortex
 description: >
   Self-improving memory architecture for OpenClaw agents. Structured memory files,
   nightly distillation, weekly synthesis, and enforced principles — so your agent
-  compounds knowledge instead of forgetting it. All sensitive features (voice profiling,
+  compounds knowledge instead of forgetting it. Includes opt-in metrics tracking with
+  growth charts and compound scoring to measure effectiveness over time. All sensitive features (voice profiling,
   infrastructure auto-collection, git push) are OFF by default and require explicit
   opt-in via environment variable or flag. Safe to install: no network calls during
   setup, fully auditable bash scripts, isolated cron sessions scoped to workspace only.
@@ -31,6 +32,7 @@ Transform a default OpenClaw agent into one that compounds knowledge daily.
 6. **Builds a voice profile** of your human from daily conversations for authentic ghostwriting (opt-in, requires `OPENCORTEX_VOICE_PROFILE=1`)
 7. **Encrypts sensitive data** in an AES-256 vault with key-only references in docs; supports passphrase rotation (`vault.sh rotate`) and validates key names on `vault.sh set`
 8. **Enables safe git backup** with secret scrubbing (secrets never modified in your live workspace — scrubbed in an isolated copy only)
+9. **Tracks growth over time** *(opt-in)* — daily metrics snapshots with compound scoring and ASCII growth charts
 
 ## Installation
 

@@ -137,6 +137,7 @@ OpenCortex contains **zero network operations** — no telemetry, no phone-home,
 | Infrastructure collection | ❌ OFF | `OPENCORTEX_INFRA_COLLECT=1` | Routes infra mentions from daily logs → `INFRA.md` | Unset env var |
 | Git backup | ❌ OFF | Say "yes" at install | Commits workspace to git (local only by default) | Remove from crontab; delete scripts |
 | Git push to remote | ❌ OFF | `--push` flag on each run | Pushes scrubbed commits to remote | Don't pass `--push` |
+| Daily metrics tracking | ❌ OFF | Say "yes" at install | Read-only file counts → `memory/metrics.log` | Remove from crontab; delete `metrics.log` |
 | Broad file scrubbing | ❌ OFF | `OPENCORTEX_SCRUB_ALL=1` | Scrubs all tracked files (not just known text types) | Unset env var |
 | File-based vault passphrase | ❌ OFF | `OPENCORTEX_ALLOW_FILE_PASSPHRASE=1` | Stores passphrase at `.vault/.passphrase` | Unset env var; use system keyring |
 
@@ -232,6 +233,66 @@ Optional environment variables (all off by default):
 5. **Test git backup in a disposable repo.** Verify `.secrets-map` entries scrub correctly before using on a real remote.
 6. **Opt-in features are off by default.** Voice profiling, infrastructure collection, broad scrubbing, and git push all require explicit activation. Only enable what you need.
 7. **Consider disabling voice profiling** if you're uncomfortable with the agent building a persistent behavioral profile from conversations.
+
+---
+
+## Metrics & Growth Tracking
+
+If enabled during install, OpenCortex tracks your agent's knowledge growth over time. A daily system cron (11:30 PM local) snapshots file counts, decision captures, tool documentation, and more into `memory/metrics.log`. No sensitive data is collected — only counts and pattern matches.
+
+### What's Tracked
+
+| Metric | What It Measures |
+|--------|-----------------|
+| Knowledge files | Total files in `memory/projects/`, `memory/runbooks/`, and `memory/` |
+| Knowledge size (KB) | Total size of knowledge files |
+| Decisions captured | `**Decision:**` entries across all memory files |
+| Runbooks | Reusable procedures in `memory/runbooks/` |
+| Tools documented | Entries in `TOOLS.md` |
+| Failures logged | `❌ FAILURE:` and `🔧 CORRECTION:` entries |
+| Debriefs | Sub-agent debrief entries in daily logs |
+| Projects | Files in `memory/projects/` |
+| Archive files | Distilled daily logs in `memory/archive/` |
+
+### Commands
+
+```bash
+# Snapshot today's metrics
+bash scripts/metrics.sh --collect
+
+# Show trends with ASCII growth charts + compound score
+bash scripts/metrics.sh --report
+
+# Last 4 weeks only
+bash scripts/metrics.sh --report --weeks 4
+
+# JSON output (for integrations)
+bash scripts/metrics.sh --json
+```
+
+Or just ask your agent: *"How is OpenCortex doing?"* or *"Show me OpenCortex metrics."*
+
+### Compound Score
+
+The report includes a 0–100 compound score reflecting knowledge depth, growth rate, and tracking consistency:
+
+| Score | Rating |
+|-------|--------|
+| 80–100 | Thriving — deep knowledge, steady growth |
+| 60–79 | Growing — good foundation, building momentum |
+| 40–59 | Developing — basics in place, room to grow |
+| 20–39 | Getting started — early days |
+| 0–19 | Just installed — give it time |
+
+A healthy OpenCortex installation trends upward over weeks. Flat or declining scores highlight specific areas to focus on.
+
+### Weekly Summary
+
+If metrics tracking is enabled, the weekly synthesis cron automatically includes a metrics report in its output — showing 4-week trends and flagging areas that need attention.
+
+### Security
+
+The metrics script (`scripts/metrics.sh`) is **read-only** — it only counts files and greps for patterns. It writes only to `memory/metrics.log` (append-only in `--collect` mode). No network access, no sensitive data captured (counts, never content), no system modifications.
 
 ---
 

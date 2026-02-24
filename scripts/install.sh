@@ -56,6 +56,10 @@ read -p "🗺️  Enable infrastructure auto-collection? Cron will route infra d
 ENABLE_INFRA=$(echo "$ENABLE_INFRA" | tr '[:upper:]' '[:lower:]')
 
 echo ""
+read -p "📊 Enable daily metrics tracking? Tracks knowledge growth over time (read-only, no sensitive data). (y/N): " ENABLE_METRICS
+ENABLE_METRICS=$(echo "$ENABLE_METRICS" | tr '[:upper:]' '[:lower:]')
+
+echo ""
 
 # --- Directory Structure ---
 echo "📁 Creating directory structure..."
@@ -161,6 +165,12 @@ Live in MEMORY.md under 🔴 PRINCIPLES. Follow them always.
 When the user asks if OpenCortex is installed, working, or wants a status check, run:
   bash skills/opencortex/scripts/verify.sh
 Share the results and offer to fix any failures.
+
+## Metrics
+When the user asks about OpenCortex metrics, how it is doing, or wants to see growth:
+1. Run: bash scripts/metrics.sh --report
+2. Share the trends, compound score, and any areas that need attention.
+3. If no data exists yet, run: bash scripts/metrics.sh --collect first.
 
 ## Updates
 When the user asks to update OpenCortex or check for updates:
@@ -287,6 +297,12 @@ If the user asks if OpenCortex is installed, working, or wants a health check:
 1. Run: bash skills/opencortex/scripts/verify.sh
 2. Share the results with the user
 3. If any checks fail, offer to re-run the installer: bash skills/opencortex/scripts/install.sh
+
+## Metrics
+When the user asks about metrics, growth, or how OpenCortex is doing:
+1. Run: bash scripts/metrics.sh --report
+2. Share the compound score and growth trends.
+3. If no data yet: bash scripts/metrics.sh --collect
 
 ## Updates
 When the user asks to update OpenCortex or check for updates:
@@ -496,6 +512,11 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
 - If not, create one with clear step-by-step instructions that a sub-agent could follow independently.
 - Update MEMORY.md runbooks index if new runbooks created.
 
+## Metrics Summary (if enabled)
+- If scripts/metrics.sh exists, run: bash scripts/metrics.sh --report --weeks 4
+- Include the output in your weekly summary — it shows knowledge growth trends and a compound score.
+- If the compound score is declining or flat, note specific areas that need attention (e.g., 'no new tools documented this week', 'no decisions captured').
+
 Before completing, append debrief to memory/YYYY-MM-DD.md.
 Reply with weekly summary." 2>/dev/null && \
         echo "   ✅ Weekly Synthesis cron created" && \
@@ -568,6 +589,51 @@ if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
   echo "   ✅ Git backup configured — edit .secrets-map to add your secrets"
 else
   echo "   Skipped git backup setup"
+fi
+
+# --- Metrics (optional) ---
+if [ "$ENABLE_METRICS" = "y" ] || [ "$ENABLE_METRICS" = "yes" ]; then
+  echo ""
+  echo "📊 Setting up metrics tracking..."
+
+  # Copy metrics script
+  SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+  if [ -f "$SKILL_DIR/metrics.sh" ]; then
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would copy: $SKILL_DIR/metrics.sh → $WORKSPACE/scripts/metrics.sh"
+    else
+      cp "$SKILL_DIR/metrics.sh" "$WORKSPACE/scripts/metrics.sh"
+      chmod +x "$WORKSPACE/scripts/metrics.sh"
+      echo "   📋 Copied metrics.sh"
+    fi
+  fi
+
+  # Add system cron (daily at 11:30 PM local — end of day snapshot)
+  if ! crontab -l 2>/dev/null | grep -q "metrics.sh"; then
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would add crontab entry: 30 23 * * * $WORKSPACE/scripts/metrics.sh --collect"
+    else
+      (crontab -l 2>/dev/null; echo "30 23 * * * $WORKSPACE/scripts/metrics.sh --collect") | crontab -
+      echo "   ✅ Daily metrics cron added (11:30 PM local)"
+      echo ""
+      echo "   📋 Cron job registered: \"Daily Metrics Collection\""
+      echo "      Schedule: 30 23 * * * (system cron)"
+      echo "      Action: read-only file count → memory/metrics.log"
+      echo "      Review: crontab -l"
+      echo ""
+    fi
+  else
+    echo "   ⏭️  Metrics cron already exists"
+  fi
+
+  # Run first collection
+  if [ "$DRY_RUN" != "true" ] && [ -x "$WORKSPACE/scripts/metrics.sh" ]; then
+    "$WORKSPACE/scripts/metrics.sh" --collect
+    echo "   📊 First snapshot captured. View with: bash scripts/metrics.sh --report"
+  fi
+else
+  echo ""
+  echo "   Skipped metrics tracking (enable later: copy scripts/metrics.sh and add to crontab)"
 fi
 
 # --- Done ---
