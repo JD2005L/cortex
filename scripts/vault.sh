@@ -124,20 +124,20 @@ _encrypt() {
   echo "$content" | gpg --batch --yes --passphrase-fd 0 --quiet --symmetric --cipher-algo AES256 --output "$VAULT_FILE" 2>/dev/null <<< "$pass"
 }
 
-# Fix: _encrypt needs passphrase on fd, content on stdin — use temp approach
+# Passphrase passed via fd 3 to avoid exposure in process list
 _encrypt() {
   local content="$1"
   local pass=$(_get_passphrase)
   local tmpfile=$(mktemp)
   echo "$content" > "$tmpfile"
-  gpg --batch --yes --passphrase "$pass" --quiet --symmetric --cipher-algo AES256 --output "$VAULT_FILE" "$tmpfile" 2>/dev/null
+  gpg --batch --yes --passphrase-fd 3 --quiet --symmetric --cipher-algo AES256 --output "$VAULT_FILE" "$tmpfile" 3<<< "$pass" 2>/dev/null
   rm -f "$tmpfile"
   chmod 600 "$VAULT_FILE"
 }
 
 _decrypt() {
   local pass=$(_get_passphrase)
-  gpg --batch --yes --passphrase "$pass" --quiet --decrypt "$VAULT_FILE" 2>/dev/null
+  gpg --batch --yes --passphrase-fd 3 --quiet --decrypt "$VAULT_FILE" 3<<< "$pass" 2>/dev/null
 }
 
 case "${1:-help}" in
@@ -261,10 +261,10 @@ ${KEY}=${VALUE}"
       chmod 600 "$VAULT_PASS_FILE"
     fi
 
-    # Re-encrypt with new passphrase
+    # Re-encrypt with new passphrase (fd 3 to avoid process list exposure)
     local tmpfile=$(mktemp)
     echo "$CONTENT" > "$tmpfile"
-    gpg --batch --yes --passphrase "$NEW_PASS" --quiet --symmetric --cipher-algo AES256 --output "$VAULT_FILE" "$tmpfile" 2>/dev/null
+    gpg --batch --yes --passphrase-fd 3 --quiet --symmetric --cipher-algo AES256 --output "$VAULT_FILE" "$tmpfile" 3<<< "$NEW_PASS" 2>/dev/null
     rm -f "$tmpfile"
     chmod 600 "$VAULT_FILE"
 

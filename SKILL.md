@@ -9,41 +9,7 @@ description: >
   best practices. NOT for: runtime memory_search queries (use built-in memory tools).
   Triggers: "set up memory", "organize yourself", "stop forgetting", "memory architecture",
   "self-improving", "cortex", "bootstrap memory", "memory optimization".
-requiredBins:
-  - grep
-  - sed
-  - find
-optionalBins:
-  - git
-  - gpg
-  - openssl
-  - openclaw
-  - secret-tool
-  - keyctl
-env:
-  CLAWD_WORKSPACE:
-    description: "Workspace directory (defaults to current directory)"
-    required: false
-  CLAWD_TZ:
-    description: "Timezone for cron scheduling (defaults to UTC)"
-    required: false
-  OPENCORTEX_VAULT_PASS:
-    description: "Vault passphrase via environment variable. Alternative to system keyring or file-based storage. Only set intentionally — prefer system keyring."
-    required: false
-    sensitive: true
-localFiles:
-  - path: ".secrets-map"
-    description: "Maps raw secrets to placeholders for git scrubbing. Contains sensitive values. Gitignored (mode 600). Only needed if git backup is enabled."
-    sensitive: true
-    optional: true
-  - path: ".vault/.passphrase"
-    description: "Vault passphrase file. Fallback only — used when no system keyring or env var is available. Gitignored (mode 600). Run vault.sh migrate to move to keyring."
-    sensitive: true
-    optional: true
-networkAccess:
-  - feature: "Git backup (optional, off by default)"
-    description: "git push to configured remote. Only if user enables git backup during install. No other network access."
-    optional: true
+metadata: {"openclaw":{"requires":{"bins":["grep","sed","find"],"optionalBins":["git","gpg","openssl","openclaw","secret-tool","keyctl"]},"env":{"CLAWD_WORKSPACE":{"description":"Workspace directory (defaults to cwd)","required":false},"CLAWD_TZ":{"description":"Timezone for cron scheduling (defaults to UTC)","required":false},"OPENCORTEX_VAULT_PASS":{"description":"Vault passphrase via env var. Prefer system keyring.","required":false,"sensitive":true}},"sensitiveFiles":[".secrets-map",".vault/.passphrase"],"networkAccess":"Optional git push only (off by default, user must enable during install)"}}
 ---
 
 # OpenCortex — Self-Improving Memory Architecture
