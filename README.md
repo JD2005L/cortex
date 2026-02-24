@@ -99,6 +99,8 @@ bash scripts/install.sh --dry-run
 
 Both jobs use a shared lockfile (`/tmp/opencortex-distill.lock`) to prevent conflicts when they run near each other.
 
+**How these work:** OpenCortex does not bundle separate distillation/synthesis scripts. Instead, the installer registers OpenClaw cron jobs (`openclaw cron add`) that spawn isolated agent sessions with detailed task instructions. The OpenClaw agent itself performs the distillation — reading workspace files, synthesizing information, and writing results — using the same tools it uses during normal conversation. This is by design: an LLM is far better at synthesizing, summarizing, and cross-referencing knowledge than any bash script could be. The cron job messages (viewable via `openclaw cron list`) *are* the implementation. You can inspect, edit, or remove them at any time.
+
 ### Principles (P1–P7)
 | # | Principle | Purpose |
 |---|-----------|---------|
@@ -138,6 +140,8 @@ The nightly distillation analyzes each day's conversations and builds a living p
 ### Purpose & Capability
 
 OpenCortex does exactly what it describes: creates structured memory files, registers nightly/weekly cron jobs for maintenance, and optionally sets up git backup. The installer (`scripts/install.sh`) and all helper scripts (`scripts/git-*.sh`) are bundled, auditable, and contain no obfuscated code. Every file is plain bash or markdown. The skill creates no executables, downloads no binaries, and installs no packages.
+
+**Note on distillation/synthesis:** These features are implemented as OpenClaw cron job messages, not standalone scripts. The installer registers cron jobs via `openclaw cron add` with detailed task instructions. At runtime, OpenClaw spawns an isolated agent session that follows these instructions to read, synthesize, and write workspace files. This is intentional — an LLM agent is the ideal tool for knowledge synthesis, summarization, and cross-referencing. The cron messages are fully inspectable via `openclaw cron list` and editable via `openclaw cron edit`.
 
 ### Instruction Scope
 
@@ -241,6 +245,7 @@ OpenCortex contains **zero network operations**. No telemetry, no phone-home, no
 | Voice profiling privacy | **Optional, local-only, removable.** |
 | Network access | **None.** All operations are local file I/O. |
 | Hidden endpoints | **None.** Full source public and auditable. |
+| Distillation/synthesis executables | **By design, none.** Implemented as OpenClaw cron job messages — the agent IS the executor. Inspect via `openclaw cron list`. |
 
 ## Requirements
 
