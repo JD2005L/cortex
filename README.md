@@ -61,12 +61,11 @@ cd opencortex && bash scripts/install.sh
 ## Updating
 
 ```bash
-clawhub install opencortex --force      # Download latest
-bash skills/opencortex/scripts/update.sh   # Apply updates (non-destructive)
-bash skills/opencortex/scripts/verify.sh   # Confirm health (read-only)
+clawhub install opencortex --force         # Download latest
+bash skills/opencortex/scripts/install.sh  # Detects existing install, offers Update
 ```
 
-The update script only adds missing content and refreshes cron messages. It never overwrites files you've customized.
+The installer detects your existing version and offers: **1) Update** (recommended) — adds missing content, refreshes cron messages, offers new optional features. **2) Full reinstall.** **3) Cancel.** It never overwrites files you've customized.
 
 ---
 

@@ -79,14 +79,11 @@ After install, review and customize:
 # 1. Download the latest version (run from workspace root)
 clawhub install opencortex --force
 
-# 2. Apply updates to your workspace (cron jobs, new principles, scripts)
-bash skills/opencortex/scripts/update.sh
-
-# 3. Verify everything is working (read-only)
-bash skills/opencortex/scripts/verify.sh
+# 2. Re-run the installer — it detects your existing install and offers to update
+bash skills/opencortex/scripts/install.sh
 ```
 
-The update script is non-destructive — it only adds missing content and updates cron job messages to the latest templates. It never overwrites files you've customized. Run verify.sh afterwards (read-only) to confirm everything is healthy.
+The installer detects your existing version and offers three options: Update (recommended), Full reinstall, or Cancel. The update path is non-destructive — it adds missing content, refreshes cron messages, and offers any new optional features without overwriting your customized files.
 
 ## Architecture
 
