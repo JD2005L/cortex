@@ -1,8 +1,20 @@
 #!/bin/bash
 # OpenCortex — Auto-commit and push workspace changes
 # Scrubs secrets before commit, restores after push
+set -euo pipefail
 WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$WORKSPACE" || exit 1
+
+# Safety: ensure critical paths are gitignored before any git operations
+for SENSITIVE in ".vault" ".secrets-map"; do
+  if [ -e "$WORKSPACE/$SENSITIVE" ]; then
+    if ! git check-ignore -q "$SENSITIVE" 2>/dev/null; then
+      echo "❌ ABORT: $SENSITIVE exists but is NOT in .gitignore."
+      echo "   Add '$SENSITIVE' to .gitignore before running backup."
+      exit 1
+    fi
+  fi
+done
 
 if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
   exit 0

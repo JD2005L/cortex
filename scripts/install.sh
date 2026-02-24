@@ -68,6 +68,16 @@ else
   mkdir -p "$WORKSPACE/scripts"
 fi
 
+# --- Safety: always gitignore sensitive paths ---
+if [ "$DRY_RUN" != "true" ]; then
+  touch "$WORKSPACE/.gitignore"
+  grep -q "^\.vault/" "$WORKSPACE/.gitignore" 2>/dev/null || echo ".vault/" >> "$WORKSPACE/.gitignore"
+  grep -q "^\.secrets-map" "$WORKSPACE/.gitignore" 2>/dev/null || echo ".secrets-map" >> "$WORKSPACE/.gitignore"
+  echo "   🔒 Ensured .vault/ and .secrets-map are gitignored"
+else
+  echo "   [DRY RUN] Would ensure .vault/ and .secrets-map in .gitignore"
+fi
+
 # --- Core Files (create only if missing) ---
 create_if_missing() {
   local file="$1"
