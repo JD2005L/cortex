@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="2.8.8"
+OPENCORTEX_VERSION="2.8.9"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -32,13 +32,10 @@ if [ -n "$INSTALLED_VERSION" ]; then
     case "$RECONFIG_CHOICE" in
       1) echo ""; echo "Proceeding with reconfiguration..." ;;
       2)
-        if command -v clawhub &>/dev/null; then
-          echo ""
-          echo "   Downloading latest from ClawHub..."
-          clawhub install opencortex --force && echo "   ✅ Downloaded. Re-run this script to apply updates." || echo "   ⚠️  Download failed."
-        else
-          echo "   clawhub CLI not found. Run: clawhub install opencortex --force"
-        fi
+        echo ""
+        echo "   To check for updates, run:"
+        echo "     clawhub install opencortex --force"
+        echo "   Then re-run this script to apply."
         exit 0
         ;;
       3)
