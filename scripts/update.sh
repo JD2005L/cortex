@@ -113,31 +113,18 @@ EOMSG
 )
 
 if command -v openclaw &>/dev/null; then
-  # Get JSON cron list and extract IDs using python3
+  # Get JSON cron list and extract IDs
   CRON_JSON=$(openclaw cron list --json 2>/dev/null || echo "[]")
 
   get_cron_id() {
     local name="$1"
-    echo "$CRON_JSON" | python3 -c "
-import sys, json
-raw = sys.stdin.read().strip()
-try:
-    data = json.loads(raw)
-except Exception:
-    sys.exit(0)
-items = data if isinstance(data, list) else data.get('crons', data.get('jobs', data.get('data', [])))
-if not isinstance(items, list):
-    sys.exit(0)
-search = sys.argv[1].lower()
-for item in items:
-    if isinstance(item, dict):
-        n = str(item.get('name', '')).lower()
-        if search in n:
-            cid = item.get('id', item.get('_id', item.get('uuid', '')))
-            if cid:
-                print(cid)
-            break
-" "$name" 2>/dev/null || true
+    local name_lower
+    name_lower=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+    # Parse JSON with grep/awk — look for "name" field matching, then grab preceding "id" field
+    echo "$CRON_JSON" | tr ',' '\n' | tr '{' '\n' | tr '}' '\n' | sed 's/^ *//' | awk -v search="$name_lower" '
+      /^"id"/ || /^"_id"/ || /^"uuid"/ { gsub(/[" ]/, ""); split($0, a, ":"); last_id=a[2] }
+      /^"name"/ { gsub(/["]/, ""); sub(/^name: */, ""); n=tolower($0); if (index(n, search) > 0 && last_id != "") { print last_id; exit } }
+    ' 2>/dev/null || true
   }
 
   DAILY_ID=$(get_cron_id "Daily Memory Distillation")
@@ -273,31 +260,19 @@ EOPR
       done
 
       # Insert before "## Identity" if it exists, otherwise append
-      python3 - "$WORKSPACE/MEMORY.md" "$TEMP_P" <<'PYEOF'
-import sys
-
-mem_path = sys.argv[1]
-new_content_path = sys.argv[2]
-
-with open(mem_path, 'r') as f:
-    content = f.read()
-
-with open(new_content_path, 'r') as f:
-    new_content = f.read()
-
-# Try to insert before ## Identity
-if '\n## Identity' in content:
-    content = content.replace('\n## Identity', new_content + '\n\n## Identity', 1)
-elif '\n---\n' in content:
-    # Insert before the first --- divider after PRINCIPLES header
-    idx = content.find('\n---\n')
-    content = content[:idx] + new_content + content[idx:]
-else:
-    content = content.rstrip('\n') + '\n' + new_content
-
-with open(mem_path, 'w') as f:
-    f.write(content)
-PYEOF
+      if grep -q "^## Identity" "$WORKSPACE/MEMORY.md"; then
+        # Insert new principles before ## Identity line
+        sed -i "/^## Identity/e cat $TEMP_P" "$WORKSPACE/MEMORY.md"
+        # Add blank line before ## Identity if missing
+        sed -i '/^## Identity/{x;/./{x;b};x;s/^/\n/}' "$WORKSPACE/MEMORY.md" 2>/dev/null || true
+      elif grep -q "^---$" "$WORKSPACE/MEMORY.md"; then
+        # Insert before first --- divider
+        sed -i "0,/^---$/{ /^---$/e cat $TEMP_P
+        }" "$WORKSPACE/MEMORY.md"
+      else
+        # Append to end
+        cat "$TEMP_P" >> "$WORKSPACE/MEMORY.md"
+      fi
 
       rm -f "$TEMP_P"
       for pnum in "${MISSING_PRINCIPLES[@]}"; do

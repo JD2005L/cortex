@@ -178,6 +178,8 @@ Additional safeguards:
 - Push requires explicit `--push` flag — local-only by default
 - `.secrets-map` has 600 permissions (owner-only read/write)
 
+**About `git-restore-secrets.sh`:** This script exists as a manual utility for reversing scrubs if you manually ran `git-scrub-secrets.sh` on your workspace. The automated `git-backup.sh` flow **never calls it** — since backup scrubs a temp copy, your workspace files are never modified and never need restoring. You can safely delete `git-restore-secrets.sh` if you don't plan to run manual scrubs.
+
 **Recommendation:** Test in a disposable repo first. Run the backup, inspect the commit diff, and confirm scrubbing works before pointing at a real remote.
 
 ### Vault Security
@@ -226,7 +228,7 @@ Optional environment variables (all off by default):
 
 ## What to Review Before Installing
 
-1. **Read the scripts.** They're bundled plain bash — `install.sh`, `update.sh`, `vault.sh`, `git-*.sh`, `verify.sh`. You can read every line before running anything.
+1. **Read the scripts.** They're bundled plain bash — `install.sh`, `update.sh`, `vault.sh`, `git-*.sh`, `verify.sh`, `metrics.sh`. You can read every line before running anything. Required binaries: `grep`, `sed`, `find`. Optional: `git`, `gpg`, `openssl`, `openclaw`, `secret-tool`, `keyctl`, `file` (for binary detection during scrubbing).
 2. **Confirm workspace isolation.** OpenCortex delegates sandbox enforcement to the OpenClaw platform. Verify your OpenClaw instance enforces workspace-only behavior for cron sessions. If isolation is misconfigured, a cron session could theoretically access files outside the workspace.
 3. **Inspect cron messages after install.** Run `openclaw cron list` to see the exact instructions registered. These are the actual implementation — edit or remove them freely.
 4. **Prefer system keyring for vault.** Use `secret-tool`, macOS Keychain, or `keyctl` over file-based passphrase storage. Set `OPENCORTEX_ALLOW_FILE_PASSPHRASE=1` only if no keyring is available and you accept the risk.
