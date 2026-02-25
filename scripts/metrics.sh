@@ -100,6 +100,12 @@ snapshot_metrics() {
 
   m_debriefs=$(count_grep_lines "$WORKSPACE/memory" "[Dd]ebrief")
   m_projects=$(count_files "$WORKSPACE/memory/projects")
+  m_contacts=$(count_files "$WORKSPACE/memory/contacts")
+  m_workflows=$(count_files "$WORKSPACE/memory/workflows")
+  m_preferences=0
+  if [ -f "$WORKSPACE/memory/preferences.md" ]; then
+    m_preferences=$(trimnum "$(grep -c '\*\*Preference:\*\*' "$WORKSPACE/memory/preferences.md" 2>/dev/null || echo 0)")
+  fi
   m_archive=$(count_files "$WORKSPACE/memory/archive")
 
   m_principles=0
@@ -142,6 +148,9 @@ tools: $m_tools
 failures_logged: $m_failures
 debriefs: $m_debriefs
 projects: $m_projects
+contacts: $m_contacts
+workflows: $m_workflows
+preferences: $m_preferences
 archive_files: $m_archive
 principles: $m_principles
 core_files: $m_core_files
@@ -169,6 +178,9 @@ do_json() {
   "failures_logged": $m_failures,
   "debriefs": $m_debriefs,
   "projects": $m_projects,
+  "contacts": $m_contacts,
+  "workflows": $m_workflows,
+  "preferences": $m_preferences,
   "archive_files": $m_archive,
   "principles": $m_principles
 }
@@ -187,8 +199,8 @@ do_report() {
 
   # Parse all entries from the log
   local dates=()
-  local kf=() kb=() dec=() rb=() tools=() fail=() deb=() proj=() arch=()
-  local cur_date="" cur_kf="" cur_kb="" cur_dec="" cur_rb="" cur_tools="" cur_fail="" cur_deb="" cur_proj="" cur_arch=""
+  local kf=() kb=() dec=() rb=() tools=() fail=() deb=() proj=() cont=() wflow=() pref=() arch=()
+  local cur_date="" cur_kf="" cur_kb="" cur_dec="" cur_rb="" cur_tools="" cur_fail="" cur_deb="" cur_proj="" cur_cont="" cur_wflow="" cur_pref="" cur_arch=""
 
   while IFS= read -r line; do
     case "$line" in
@@ -197,9 +209,10 @@ do_report() {
           dates+=("$cur_date")
           kf+=("${cur_kf:-0}"); kb+=("${cur_kb:-0}"); dec+=("${cur_dec:-0}")
           rb+=("${cur_rb:-0}"); tools+=("${cur_tools:-0}"); fail+=("${cur_fail:-0}")
-          deb+=("${cur_deb:-0}"); proj+=("${cur_proj:-0}"); arch+=("${cur_arch:-0}")
+          deb+=("${cur_deb:-0}"); proj+=("${cur_proj:-0}"); cont+=("${cur_cont:-0}")
+          wflow+=("${cur_wflow:-0}"); pref+=("${cur_pref:-0}"); arch+=("${cur_arch:-0}")
         fi
-        cur_date="" cur_kf="" cur_kb="" cur_dec="" cur_rb="" cur_tools="" cur_fail="" cur_deb="" cur_proj="" cur_arch=""
+        cur_date="" cur_kf="" cur_kb="" cur_dec="" cur_rb="" cur_tools="" cur_fail="" cur_deb="" cur_proj="" cur_cont="" cur_wflow="" cur_pref="" cur_arch=""
         ;;
       date:*) cur_date="${line#date: }" ;;
       knowledge_files:*) cur_kf="${line#knowledge_files: }" ;;
@@ -210,6 +223,9 @@ do_report() {
       failures_logged:*) cur_fail="${line#failures_logged: }" ;;
       debriefs:*) cur_deb="${line#debriefs: }" ;;
       projects:*) cur_proj="${line#projects: }" ;;
+      contacts:*) cur_cont="${line#contacts: }" ;;
+      workflows:*) cur_wflow="${line#workflows: }" ;;
+      preferences:*) cur_pref="${line#preferences: }" ;;
       archive_files:*) cur_arch="${line#archive_files: }" ;;
     esac
   done < "$METRICS_LOG"
@@ -218,7 +234,8 @@ do_report() {
     dates+=("$cur_date")
     kf+=("${cur_kf:-0}"); kb+=("${cur_kb:-0}"); dec+=("${cur_dec:-0}")
     rb+=("${cur_rb:-0}"); tools+=("${cur_tools:-0}"); fail+=("${cur_fail:-0}")
-    deb+=("${cur_deb:-0}"); proj+=("${cur_proj:-0}"); arch+=("${cur_arch:-0}")
+    deb+=("${cur_deb:-0}"); proj+=("${cur_proj:-0}"); cont+=("${cur_cont:-0}")
+    wflow+=("${cur_wflow:-0}"); pref+=("${cur_pref:-0}"); arch+=("${cur_arch:-0}")
   fi
 
   local total=${#dates[@]}
@@ -262,6 +279,9 @@ do_report() {
   print_row "Failures logged" "${fail[$first]}" "${fail[$last]}"
   print_row "Debriefs" "${deb[$first]}" "${deb[$last]}"
   print_row "Projects" "${proj[$first]}" "${proj[$last]}"
+  print_row "Contacts" "${cont[$first]}" "${cont[$last]}"
+  print_row "Workflows" "${wflow[$first]}" "${wflow[$last]}"
+  print_row "Preferences" "${pref[$first]}" "${pref[$last]}"
   print_row "Archive files" "${arch[$first]}" "${arch[$last]}"
 
   echo ""
@@ -290,21 +310,27 @@ do_report() {
   [ "${dec[$last]}" -ge 20 ] && score=$(( score + 5 ))
   [ "${rb[$last]}" -ge 1 ] && score=$(( score + 5 ))
   [ "${rb[$last]}" -ge 3 ] && score=$(( score + 5 ))
-  [ "${tools[$last]}" -ge 3 ] && score=$(( score + 10 ))
-  [ "${tools[$last]}" -ge 10 ] && score=$(( score + 5 ))
-  [ "${proj[$last]}" -ge 2 ] && score=$(( score + 10 ))
-  [ "${arch[$last]}" -ge 7 ] && score=$(( score + 10 ))
-  [ "${arch[$last]}" -ge 30 ] && score=$(( score + 5 ))
+  [ "${tools[$last]}" -ge 3 ] && score=$(( score + 8 ))
+  [ "${tools[$last]}" -ge 10 ] && score=$(( score + 4 ))
+  [ "${proj[$last]}" -ge 2 ] && score=$(( score + 8 ))
+  [ "${cont[$last]}" -ge 1 ] && score=$(( score + 3 ))
+  [ "${cont[$last]}" -ge 5 ] && score=$(( score + 3 ))
+  [ "${wflow[$last]}" -ge 1 ] && score=$(( score + 3 ))
+  [ "${pref[$last]}" -ge 3 ] && score=$(( score + 4 ))
+  [ "${pref[$last]}" -ge 10 ] && score=$(( score + 3 ))
+  [ "${arch[$last]}" -ge 7 ] && score=$(( score + 7 ))
+  [ "${arch[$last]}" -ge 30 ] && score=$(( score + 4 ))
 
   # Growth bonus (if any metric grew)
   local grew=0
   [ "${kf[$last]}" -gt "${kf[$first]}" ] && grew=1
   [ "${dec[$last]}" -gt "${dec[$first]}" ] && grew=1
   [ "${tools[$last]}" -gt "${tools[$first]}" ] && grew=1
-  [ "$grew" -eq 1 ] && score=$(( score + 10 ))
+  [ "${pref[$last]}" -gt "${pref[$first]}" ] && grew=1
+  [ "$grew" -eq 1 ] && score=$(( score + 7 ))
 
   # Consistency bonus (more than 7 data points = at least a week of tracking)
-  [ "$(( total - start ))" -ge 7 ] && score=$(( score + 10 ))
+  [ "$(( total - start ))" -ge 7 ] && score=$(( score + 7 ))
 
   [ "$score" -gt "$max_score" ] && score=$max_score
 

@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="2.8.9"
+OPENCORTEX_VERSION="3.0.0"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -145,11 +145,15 @@ echo "📁 Creating directory structure..."
 if [ "$DRY_RUN" = "true" ]; then
   echo "   [DRY RUN] Would mkdir: $WORKSPACE/memory/projects"
   echo "   [DRY RUN] Would mkdir: $WORKSPACE/memory/runbooks"
+  echo "   [DRY RUN] Would mkdir: $WORKSPACE/memory/contacts"
+  echo "   [DRY RUN] Would mkdir: $WORKSPACE/memory/workflows"
   echo "   [DRY RUN] Would mkdir: $WORKSPACE/memory/archive"
   echo "   [DRY RUN] Would mkdir: $WORKSPACE/scripts"
 else
   mkdir -p "$WORKSPACE/memory/projects"
   mkdir -p "$WORKSPACE/memory/runbooks"
+  mkdir -p "$WORKSPACE/memory/contacts"
+  mkdir -p "$WORKSPACE/memory/workflows"
   mkdir -p "$WORKSPACE/memory/archive"
   mkdir -p "$WORKSPACE/scripts"
 fi
@@ -275,15 +279,17 @@ Do not mentally note — commit to memory files. Update indexes after significan
 ### P3: Ask Before External Actions
 Emails, public posts, destructive ops — get confirmation first.
 
-### P4: Tool Shed
-All tools, APIs, access methods, and capabilities SHALL be documented in TOOLS.md with goal-oriented abilities descriptions. When given a new tool during work, immediately add it.
-**Creation:** When you access a new system, API, or resource more than once — or when given access to something that will clearly recur — proactively create the tool entry, bridge doc, or helper script. Do not wait to be asked. The bar is: if future-me would need to figure this out again, build the tool now.
+### P4: Tool Shed & Workflows
+All tools, APIs, access methods, and capabilities SHALL be documented in TOOLS.md with goal-oriented abilities descriptions. When given a new tool during work, immediately add it. Document workflows and pipelines in memory/workflows/ with clear descriptions of what they do, how they connect, and how to operate them.
+**Creation:** When you access a new system, API, or resource more than once — or when given access to something that will clearly recur — proactively create the tool entry, bridge doc, or helper script. When a multi-service workflow is described or used, document it in memory/workflows/. Do not wait to be asked.
 **Enforcement:** After using any CLI tool, API, or service — before ending the task — verify it exists in TOOLS.md. If not, add it immediately. Do not defer to distillation.
 
-### P5: Capture Decisions
-When the user makes a decision or states a preference, immediately record it in the relevant file with reasoning. Never re-ask something already decided. Format: **Decision:** [what] — [why] (date)
-**Recognition:** Decisions include: explicit choices, stated preferences, architectural directions, and workflow rules. If the user expresses an opinion that would affect future work, that is a decision — capture it.
-**Enforcement:** Before ending any conversation with substantive work, scan for uncaptured decisions. If any, write them before closing.
+### P5: Capture Decisions & Preferences
+When the user makes a decision or states a preference, immediately record it. Decisions go in the relevant project/memory file. Preferences go in memory/preferences.md under the right category. Never re-ask something already decided or stated.
+**Decisions format:** **Decision:** [what] — [why] (date) — in the relevant project or memory file.
+**Preferences format:** **Preference:** [what] — [context/reasoning] (date) — in memory/preferences.md under the matching category (Communication, Code & Technical, Workflow & Process, Scheduling & Time, Tools & Services, Content & Media, Environment & Setup).
+**Recognition:** Decisions include: explicit choices, architectural directions, and workflow rules. Preferences include: stated likes/dislikes, communication style preferences, tool preferences, formatting preferences, and any opinion that would affect future work. If the user says "I prefer X" or "always do Y" or "I don'"'"'t like Z" — that is a preference. Capture it immediately.
+**Enforcement:** Before ending any conversation with substantive work, scan for uncaptured decisions AND preferences. If any, write them before closing.
 
 ### P6: Sub-agent Debrief
 Sub-agents MUST write a brief debrief to memory/YYYY-MM-DD.md before completing. Include: what was done, what was learned, any issues.
@@ -317,6 +323,15 @@ Before telling the user you cannot do something, or asking them to do it manuall
 
 ### Scheduled Jobs
 (populated after cron setup below)
+
+### Contacts (memory/contacts/)
+(one file per person/org — name, role, context, preferences, history)
+
+### Workflows (memory/workflows/)
+(pipelines, automations, multi-service processes)
+
+### Preferences (memory/preferences.md)
+Cross-cutting user preferences organized by category. Updated as discovered.
 
 ### Runbooks (memory/runbooks/)
 (add repeatable procedures here)
@@ -389,6 +404,33 @@ When the user asks to update OpenCortex or check for updates:
 2. Run: bash skills/opencortex/scripts/update.sh
 3. Run: bash skills/opencortex/scripts/verify.sh
 Share the results with the user.'
+
+create_if_missing "$WORKSPACE/memory/preferences.md" '# Preferences — What My Human Prefers
+
+Discovered preferences, organized by category. Updated by nightly distillation when new preferences are stated in conversation. Format: **Preference:** [what] — [context/reasoning] (YYYY-MM-DD)
+
+---
+
+## Communication
+(add as discovered)
+
+## Code & Technical
+(add as discovered)
+
+## Workflow & Process
+(add as discovered)
+
+## Scheduling & Time
+(add as discovered)
+
+## Tools & Services
+(add as discovered)
+
+## Content & Media
+(add as discovered)
+
+## Environment & Setup
+(add as discovered)'
 
 if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
   create_if_missing "$WORKSPACE/memory/VOICE.md" '# VOICE.md — How My Human Communicates
@@ -465,10 +507,14 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
    - New tool descriptions and capabilities → TOOLS.md (names, URLs, what they do)
    - IMPORTANT: Never write passwords, tokens, or secrets into any file. For sensitive values, instruct the user to run: scripts/vault.sh set <key> <value>. Reference in docs as: vault:<key>
    - Infrastructure changes → INFRA.md (ONLY if OPENCORTEX_INFRA_COLLECT=1 is set in the environment — otherwise skip infrastructure routing entirely)
+   - Contacts mentioned → memory/contacts/ (one file per person/org. Include: name, role/relationship, context, communication preferences, key interactions. Create new file if first mention, update existing if already known.)
+   - Workflows described → memory/workflows/ (one file per workflow/pipeline. Include: what it does, services involved, how to operate it, known issues. Create new file if first description.)
+   - Preferences stated → memory/preferences.md (append under the matching category: Communication, Code & Technical, Workflow & Process, Scheduling & Time, Tools & Services, Content & Media, Environment & Setup. Format: **Preference:** [what] — [context/reasoning] (date). Do NOT duplicate existing preferences — update them if the user changes their mind.)
+   - Decisions → relevant project file or MEMORY.md. Format: **Decision:** [what] — [why] (date)
    - Principles, lessons → MEMORY.md
    - Scheduled jobs → MEMORY.md jobs table
-   - User preferences → USER.md
-3. Synthesize, do not copy. Extract decisions, architecture, lessons, issues, capabilities.
+   - User info and communication style → USER.md
+3. Synthesize, do not copy. Extract decisions, architecture, lessons, issues, capabilities, contacts, workflows, preferences.
 4. Move distilled logs to memory/archive/
 5. Update MEMORY.md index if new files created."
     else
@@ -480,10 +526,14 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
    - Project work → memory/projects/ (create new files if needed)
    - New tools, APIs, access methods → TOOLS.md
    - Infrastructure changes → INFRA.md (ONLY if OPENCORTEX_INFRA_COLLECT=1 is set in the environment — otherwise skip infrastructure routing entirely)
+   - Contacts mentioned → memory/contacts/ (one file per person/org. Include: name, role/relationship, context, communication preferences, key interactions. Create new file if first mention, update existing if already known.)
+   - Workflows described → memory/workflows/ (one file per workflow/pipeline. Include: what it does, services involved, how to operate it, known issues. Create new file if first description.)
+   - Preferences stated → memory/preferences.md (append under the matching category: Communication, Code & Technical, Workflow & Process, Scheduling & Time, Tools & Services, Content & Media, Environment & Setup. Format: **Preference:** [what] — [context/reasoning] (date). Do NOT duplicate existing preferences — update them if the user changes their mind.)
+   - Decisions → relevant project file or MEMORY.md. Format: **Decision:** [what] — [why] (date)
    - Principles, lessons → MEMORY.md
    - Scheduled jobs → MEMORY.md jobs table
-   - User preferences → USER.md
-3. Synthesize, do not copy. Extract decisions, architecture, lessons, issues, capabilities.
+   - User info and communication style → USER.md
+3. Synthesize, do not copy. Extract decisions, architecture, lessons, issues, capabilities, contacts, workflows, preferences.
 4. Move distilled logs to memory/archive/
 5. Update MEMORY.md index if new files created."
     fi
@@ -504,6 +554,9 @@ ONLY perform this section if OPENCORTEX_VOICE_PROFILE=1 is set in the environmen
 
 ## Optimization
 - Review memory/projects/ for duplicates, stale info, verbose sections. Fix directly.
+- Review memory/contacts/ — merge duplicates, update stale info, add missing context.
+- Review memory/workflows/ — verify accuracy, update if services or steps changed.
+- Review memory/preferences.md — remove contradicted preferences (user changed mind), merge duplicates, ensure categories are correct.
 - Review MEMORY.md: verify index accuracy, principles concise, jobs table current.
 - Review TOOLS.md and (if OPENCORTEX_INFRA_COLLECT=1) INFRA.md: remove stale entries, verify descriptions.
 
@@ -511,9 +564,19 @@ ONLY perform this section if OPENCORTEX_VOICE_PROFILE=1 is set in the environmen
 - Read TOOLS.md. Scan today daily logs and archived conversation for any CLI tools, APIs, or services that were USED but are NOT documented in TOOLS.md. Add missing entries with: what it is, how to access it, what it can do. This catches tools that slipped through real-time P4 enforcement.
 - For tools that ARE already in TOOLS.md, check if today's logs reveal any gotchas, failure modes, flags, or usage notes not yet captured in the tool entry. Update existing entries with warnings or corrected usage patterns. Incomplete tool docs are as dangerous as missing ones.
 
-## Decision Audit (P5 Enforcement)
-- Scan today's daily logs for any decisions, preferences, or architectural directions stated by the user that are NOT captured in project files, MEMORY.md, or USER.md. Decisions include explicit choices, stated preferences, architectural directions, and workflow rules.
+## Decision & Preference Audit (P5 Enforcement)
+- Scan today's daily logs for any decisions stated by the user that are NOT captured in project files, MEMORY.md, or USER.md. Decisions include explicit choices, architectural directions, and workflow rules.
 - For each uncaptured decision, write it to the appropriate file. Format: **Decision:** [what] — [why] (date)
+- Scan today's daily logs for any stated preferences NOT in memory/preferences.md. Preferences include: likes/dislikes, style choices, tool preferences, communication preferences, formatting preferences, and any opinion that would affect future work. Phrases like "I prefer", "always do", "I don't like", "I want", "don't ever" signal preferences.
+- For each uncaptured preference, append to memory/preferences.md under the right category. Format: **Preference:** [what] — [context/reasoning] (date). If a preference contradicts an existing one, UPDATE the existing entry (user changed their mind).
+
+## Contact Audit
+- Scan today's daily logs for any people or organizations mentioned. For each, check if a file exists in memory/contacts/. If not and the person/org is relevant (not a one-off mention), create one with: name, role/relationship, context, key details.
+- For existing contacts, check if today's logs contain new information (changed role, new preferences, new context) and update their file.
+
+## Workflow Audit
+- Scan today's daily logs for any workflows, pipelines, or multi-service processes described or used. For each, check if a file exists in memory/workflows/. If not, create one.
+- For existing workflows, check if today's logs reveal changes, issues, or new steps and update their file.
 
 ## Debrief Recovery (P6 Enforcement)
 - Check today's daily logs for any sub-agent delegations. For each, verify a debrief entry exists. If a sub-agent was spawned but no debrief appears (failed, timed out, or forgotten), write a recovery debrief noting what was attempted and that the debrief was recovered by distillation.
@@ -572,7 +635,7 @@ Reply with brief summary."
 IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. If it exists and was created less than 10 minutes ago, wait 30 seconds and retry (up to 3 times). Before starting work, create this lockfile. Remove it when done. This prevents daily and weekly jobs from conflicting.
 
 1. Read archived daily logs from past 7 days (memory/archive/).
-2. Read all project files (memory/projects/).
+2. Read all project files (memory/projects/), contact files (memory/contacts/), workflow files (memory/workflows/), and preferences (memory/preferences.md).
 3. Identify and act on:
    a. Recurring problems → add to project Known Issues
    b. Unfinished threads → add to Pending with last-touched date
@@ -581,6 +644,9 @@ IMPORTANT: Before writing to any file, check for /tmp/opencortex-distill.lock. I
    e. New capabilities → verify in TOOLS.md with abilities (P4)
    f. **Runbook detection** — identify any multi-step procedure (3+ steps) performed more than once this week, or likely to recur. Check if a runbook exists in memory/runbooks/. If not, create one with clear steps a sub-agent could follow. Update MEMORY.md runbooks index.
    g. **Principle health** — read MEMORY.md principles section. Verify each principle has: clear intent, enforcement mechanism, and that the enforcement is actually reflected in the distillation cron. Flag any principle without enforcement.
+   h. **Contact review** — check memory/contacts/ for stale entries (mentioned this week but file is outdated), missing contacts (mentioned multiple times but no file), or contacts that should be merged.
+   i. **Workflow review** — check memory/workflows/ for outdated descriptions, workflows that were modified this week, or new workflows that should be documented.
+   j. **Preference review** — read memory/preferences.md. Check for contradictions (user said opposite things at different times — keep the latest), preferences that may be stale, and uncategorized entries. Ensure all categories are well-organized.
 4. Write weekly summary to memory/archive/weekly-YYYY-MM-DD.md.
 
 ## Runbook Detection

@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="2.8.9"
+OPENCORTEX_VERSION="3.0.0"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -322,6 +322,57 @@ copy_script_if_missing() {
 
 copy_script_if_missing "verify.sh"
 copy_script_if_missing "vault.sh"
+
+# Create new directories if missing
+for d in memory/contacts memory/workflows; do
+  if [ ! -d "$WORKSPACE/$d" ]; then
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would create: $d/"
+    else
+      mkdir -p "$WORKSPACE/$d"
+      echo "   📁 Created $d/"
+      UPDATED=$((UPDATED + 1))
+    fi
+  fi
+done
+
+# Create preferences.md if missing
+if [ ! -f "$WORKSPACE/memory/preferences.md" ]; then
+  if [ "$DRY_RUN" = "true" ]; then
+    echo "   [DRY RUN] Would create: memory/preferences.md"
+  else
+    cat > "$WORKSPACE/memory/preferences.md" <<'PREFEOF'
+# Preferences — What My Human Prefers
+
+Discovered preferences, organized by category. Updated by nightly distillation when new preferences are stated in conversation. Format: **Preference:** [what] — [context/reasoning] (YYYY-MM-DD)
+
+---
+
+## Communication
+(add as discovered)
+
+## Code & Technical
+(add as discovered)
+
+## Workflow & Process
+(add as discovered)
+
+## Scheduling & Time
+(add as discovered)
+
+## Tools & Services
+(add as discovered)
+
+## Content & Media
+(add as discovered)
+
+## Environment & Setup
+(add as discovered)
+PREFEOF
+    echo "   📝 Created memory/preferences.md"
+    UPDATED=$((UPDATED + 1))
+  fi
+fi
 
 echo ""
 

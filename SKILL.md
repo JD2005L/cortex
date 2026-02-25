@@ -98,7 +98,10 @@ BOOTSTRAP.md     ← First-run checklist for new sessions
 
 memory/
   projects/      ← One file per project (distilled, not raw)
+  contacts/      ← One file per person/org (role, context, preferences)
+  workflows/     ← One file per workflow/pipeline (services, steps, issues)
   runbooks/      ← Step-by-step procedures (delegatable to sub-agents)
+  preferences.md ← Cross-cutting user preferences by category
   archive/       ← Archived daily logs + weekly summaries
   YYYY-MM-DD.md  ← Today's working log (distilled nightly)
 ```
@@ -110,8 +113,8 @@ memory/
 | P1 | Delegate First | Assess tasks for sub-agent delegation; stay available |
 | P2 | Write It Down | Commit to files, not mental notes |
 | P3 | Ask Before External | Confirm before emails, public posts, destructive ops |
-| P4 | Tool Shed | Document + proactively create tools; enforced by nightly audit |
-| P5 | Capture Decisions | Record decisions with reasoning; enforced by nightly + weekly audit |
+| P4 | Tool Shed & Workflows | Document tools and workflows; enforced by nightly audit |
+| P5 | Capture Decisions & Preferences | Record decisions and preferences; enforced by nightly + weekly audit |
 | P6 | Sub-agent Debrief | Delegated work feeds back to daily log; orphans recovered by distillation |
 | P7 | Log Failures | Tag failures/corrections; root cause analysis enforced by nightly audit |
 | P8 | Check the Shed First | Consult TOOLS.md/INFRA.md/memory before deferring work to user; enforced by nightly audit |
@@ -139,11 +142,17 @@ Before each push, `git-backup.sh` verifies no raw secrets remain in the scrubbed
 
 ## Customization
 
-**Adding a new project:** Create `memory/projects/my-project.md`, add to MEMORY.md index. Nightly distillation will route relevant daily log entries to it.
+**Adding a project:** Create `memory/projects/my-project.md`, add to MEMORY.md index.
 
-**Adding a new principle:** Append to MEMORY.md under 🔴 PRINCIPLES. Keep it short — one sentence proclamation.
+**Adding a contact:** Create `memory/contacts/name.md`. Distillation auto-creates contacts from conversations.
 
-**Adding a runbook:** Create `memory/runbooks/my-procedure.md` with step-by-step instructions. Sub-agents can follow these directly.
+**Adding a workflow:** Create `memory/workflows/my-pipeline.md`. Distillation auto-creates workflows when described.
+
+**Adding a preference:** Append to `memory/preferences.md` under the right category. Distillation auto-captures from conversation.
+
+**Adding a principle:** Append to MEMORY.md under 🔴 PRINCIPLES. Keep it short.
+
+**Adding a runbook:** Create `memory/runbooks/my-procedure.md`. Sub-agents can follow these directly.
 
 **Adding a tool:** Add to TOOLS.md with: what it is, how to access it, and a goal-oriented abilities description (so future intent-based lookup matches).
 

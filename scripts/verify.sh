@@ -43,7 +43,7 @@ echo ""
 
 # --- Directories ---
 echo "📂 Directories:"
-for d in memory memory/projects memory/runbooks memory/archive; do
+for d in memory memory/projects memory/runbooks memory/contacts memory/workflows memory/archive; do
   if [ -d "$WORKSPACE/$d" ]; then
     check "$d/ exists" "ok"
   else

@@ -82,7 +82,10 @@ BOOTSTRAP.md     ← Session startup checklist
 
 memory/
   projects/      ← One file per project (distilled, not raw)
+  contacts/      ← One file per person/org (role, context, preferences)
+  workflows/     ← One file per workflow/pipeline (services, steps, issues)
   runbooks/      ← Step-by-step procedures (delegatable to sub-agents)
+  preferences.md ← Cross-cutting user preferences by category
   archive/       ← Archived daily logs + weekly summaries
   YYYY-MM-DD.md  ← Today's working log (distilled nightly)
 ```
@@ -94,8 +97,8 @@ memory/
 | P1 | Delegate First | Sub-agent delegation by default | Agent protocol |
 | P2 | Write It Down | Commit to files, not mental notes | Agent protocol |
 | P3 | Ask Before External | Confirm before public/destructive actions | Agent protocol |
-| P4 | Tool Shed | Document tools with abilities descriptions | Nightly audit scans for undocumented tools |
-| P5 | Capture Decisions | Record decisions with reasoning | Nightly + weekly audit for uncaptured decisions |
+| P4 | Tool Shed & Workflows | Document tools and workflows | Nightly audit scans for undocumented tools and workflows |
+| P5 | Capture Decisions & Preferences | Record decisions and preferences | Nightly + weekly audit for uncaptured decisions and preferences |
 | P6 | Sub-agent Debrief | Delegated work feeds back to daily log | Nightly audit recovers orphaned debriefs |
 | P7 | Log Failures | Tag failures with root cause analysis | Nightly audit checks for missing root causes |
 | P8 | Check the Shed First | Use documented tools before deferring to user | Nightly audit flags unnecessary deferrals |
@@ -146,8 +149,8 @@ Two cron jobs, both running as **isolated OpenClaw agent sessions** scoped to th
 
 | Job | Schedule | Reads | Writes | Network Access |
 |-----|----------|-------|--------|----------------|
-| Daily Distillation | Daily 3 AM (local) | `memory/*.md`, workspace `*.md` | `memory/projects/`, `MEMORY.md`, `TOOLS.md`, `USER.md`, daily log audit outputs | **None** |
-| Weekly Synthesis | Sunday 5 AM (local) | `memory/archive/*.md`, `memory/projects/*.md` | `memory/archive/weekly-*.md`, project files, `memory/runbooks/` | **None** |
+| Daily Distillation | Daily 3 AM (local) | `memory/*.md`, workspace `*.md` | `memory/projects/`, `memory/contacts/`, `memory/workflows/`, `memory/preferences.md`, `MEMORY.md`, `TOOLS.md`, `USER.md`, daily log audit outputs | **None** |
+| Weekly Synthesis | Sunday 5 AM (local) | `memory/archive/*.md`, `memory/projects/*.md`, `memory/contacts/*.md`, `memory/workflows/*.md`, `memory/preferences.md` | `memory/archive/weekly-*.md`, project/contact/workflow/preference files, `memory/runbooks/` | **None** |
 
 Both jobs:
 - Use a shared lockfile (`/tmp/opencortex-distill.lock`) to prevent conflicts
@@ -246,6 +249,9 @@ If enabled during install, OpenCortex tracks your agent's knowledge growth over 
 | Knowledge files | Total files in `memory/projects/`, `memory/runbooks/`, and `memory/` |
 | Knowledge size (KB) | Total size of knowledge files |
 | Decisions captured | `**Decision:**` entries across all memory files |
+| Preferences captured | `**Preference:**` entries in `memory/preferences.md` |
+| Contacts | People/orgs documented in `memory/contacts/` |
+| Workflows | Pipelines/automations in `memory/workflows/` |
 | Runbooks | Reusable procedures in `memory/runbooks/` |
 | Tools documented | Entries in `TOOLS.md` |
 | Failures logged | `❌ FAILURE:` and `🔧 CORRECTION:` entries |
@@ -298,6 +304,12 @@ The metrics script (`scripts/metrics.sh`) is **read-only** — it only counts fi
 ## Customization
 
 **Add a project:** Create `memory/projects/my-project.md`, add to MEMORY.md index. Nightly distillation routes relevant daily log entries to it.
+
+**Add a contact:** Create `memory/contacts/name.md` with: name, role/relationship, context, communication preferences. Distillation auto-creates contacts mentioned in conversation.
+
+**Add a workflow:** Create `memory/workflows/my-pipeline.md` with: what it does, services involved, how to operate it. Distillation auto-creates workflows when described.
+
+**Add a preference:** Append to `memory/preferences.md` under the right category. Format: `**Preference:** [what] — [context] (date)`. Distillation auto-captures preferences stated in conversation.
 
 **Add a principle:** Append to MEMORY.md under 🔴 PRINCIPLES. Keep it short.
 
