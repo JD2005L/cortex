@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.0.6"
+OPENCORTEX_VERSION="3.0.7"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -570,7 +570,7 @@ ONLY perform this section if OPENCORTEX_VOICE_PROFILE=1 is set in the environmen
 ## Decision & Preference Audit (P5 Enforcement)
 - Scan today's daily logs for any decisions stated by the user that are NOT captured in project files, MEMORY.md, or USER.md. Decisions include explicit choices, architectural directions, and workflow rules.
 - For each uncaptured decision, write it to the appropriate file. Format: **Decision:** [what] — [why] (date)
-- Scan today's daily logs for any stated preferences NOT in memory/preferences.md. Preferences include: likes/dislikes, style choices, tool preferences, communication preferences, formatting preferences, and any opinion that would affect future work. Phrases like "I prefer", "always do", "I don't like", "I want", "don't ever" signal preferences.
+- Scan today's daily logs for any stated preferences NOT in memory/preferences.md. Preferences include: likes/dislikes, style choices, tool preferences, communication preferences, formatting preferences, and any opinion that would affect future work. Phrases like 'I prefer', 'always do', 'I don't like', 'I want', 'don't ever' signal preferences.
 - For each uncaptured preference, append to memory/preferences.md under the right category. Format: **Preference:** [what] — [context/reasoning] (date). If a preference contradicts an existing one, UPDATE the existing entry (user changed their mind).
 
 ## Contact Audit
