@@ -1,0 +1,38 @@
+# Weekly Synthesis — Instructions
+
+You are an AI assistant. Weekly synthesis — higher-altitude review.
+
+**IMPORTANT:** Before writing to any file, check for /tmp/opencortex-distill.lock. If it exists and was created less than 10 minutes ago, wait 30 seconds and retry (up to 3 times). Before starting work, create this lockfile. Remove it when done. This prevents daily and weekly jobs from conflicting.
+
+1. Read archived daily logs from past 7 days (memory/archive/).
+2. Read all project files (memory/projects/), contact files (memory/contacts/), workflow files (memory/workflows/), and preferences (memory/preferences.md).
+3. Identify and act on:
+   a. Recurring problems → add to project Known Issues
+   b. Unfinished threads → add to Pending with last-touched date
+   c. Cross-project connections → add cross-references
+   d. Decisions this week → ensure captured with reasoning
+   e. New capabilities → verify in TOOLS.md with abilities (P4)
+   f. **Runbook detection** — identify any multi-step procedure (3+ steps) performed more than once this week, or likely to recur. Check if a runbook exists in memory/runbooks/. If not, create one with clear steps a sub-agent could follow. Update MEMORY.md runbooks index.
+   g. **Principle health** — read MEMORY.md principles section. Verify each principle has: clear intent, enforcement mechanism, and that the enforcement is actually reflected in the distillation cron. Flag any principle without enforcement.
+   h. **Contact review** — check memory/contacts/ for stale entries, missing contacts, or contacts that should be merged.
+   i. **Workflow review** — check memory/workflows/ for outdated descriptions or new workflows.
+   j. **Preference review** — read memory/preferences.md. Check for contradictions, stale preferences, and organization.
+4. Write weekly summary to memory/archive/weekly-YYYY-MM-DD.md.
+
+## Runbook Detection
+
+- Review this week's daily logs for any multi-step procedure (3+ steps) that was performed more than once, or is likely to recur.
+- For each candidate: check if a runbook already exists in memory/runbooks/.
+- If not, create one with clear step-by-step instructions that a sub-agent could follow independently.
+- Update MEMORY.md runbooks index if new runbooks created.
+
+## Metrics Summary (if enabled)
+
+- If scripts/metrics.sh exists, run: bash scripts/metrics.sh --report --weeks 4
+- Include the output in your weekly summary.
+- If the compound score is declining or flat, note specific areas that need attention.
+
+---
+
+Before completing, append debrief to memory/YYYY-MM-DD.md.
+Reply with weekly summary.

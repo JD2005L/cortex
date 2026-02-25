@@ -91,6 +91,16 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
   else
     check "No principles found in MEMORY.md" "fail"
   fi
+  # Context budget: check MEMORY.md size
+  MEM_SIZE=$(wc -c < "$WORKSPACE/MEMORY.md" 2>/dev/null | tr -d ' ')
+  MEM_KB=$(( MEM_SIZE / 1024 ))
+  if [ "$MEM_SIZE" -le 3072 ]; then
+    check "MEMORY.md size: ${MEM_KB}KB (within 3KB budget)" "ok"
+  elif [ "$MEM_SIZE" -le 5120 ]; then
+    check "MEMORY.md size: ${MEM_KB}KB (over 3KB target — consider moving verbose content to project/memory files)" "warn"
+  else
+    check "MEMORY.md size: ${MEM_KB}KB (well over 3KB — loaded every session, move content to dedicated files)" "warn"
+  fi
 else
   check "MEMORY.md not found" "fail"
 fi
