@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.0.2"
+OPENCORTEX_VERSION="3.0.3"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -360,7 +360,7 @@ echo ""
 # ─────────────────────────────────────────────────────────────────────────────
 echo "📋 Checking helper scripts..."
 
-copy_script_if_missing() {
+copy_or_update_script() {
   local script_name="$1"
   local src="$SCRIPT_DIR/$script_name"
   local dst="$WORKSPACE/scripts/$script_name"
@@ -372,8 +372,23 @@ copy_script_if_missing() {
   fi
 
   if [ -f "$dst" ]; then
-    echo "   ⏭️  $script_name already in workspace scripts/ (skipped)"
-    SKIPPED=$((SKIPPED + 1))
+    # Compare checksums — update if different
+    local src_hash dst_hash
+    src_hash=$(md5sum "$src" 2>/dev/null | cut -d' ' -f1)
+    dst_hash=$(md5sum "$dst" 2>/dev/null | cut -d' ' -f1)
+    if [ "$src_hash" = "$dst_hash" ]; then
+      echo "   ⏭️  $script_name already current (skipped)"
+      SKIPPED=$((SKIPPED + 1))
+      return
+    fi
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would update: $script_name"
+    else
+      cp "$src" "$dst"
+      chmod +x "$dst"
+      echo "   🔄 Updated $script_name"
+    fi
+    UPDATED=$((UPDATED + 1))
     return
   fi
 
@@ -389,8 +404,10 @@ copy_script_if_missing() {
   fi
 }
 
-copy_script_if_missing "verify.sh"
-copy_script_if_missing "vault.sh"
+copy_or_update_script "verify.sh"
+copy_or_update_script "vault.sh"
+copy_or_update_script "metrics.sh"
+copy_or_update_script "git-backup.sh"
 
 # Create new directories if missing
 for d in memory/contacts memory/workflows; do
@@ -443,11 +460,53 @@ PREFEOF
   fi
 fi
 
+# Add missing MEMORY.md index sections
+if [ -f "$WORKSPACE/MEMORY.md" ]; then
+  echo "📋 Checking MEMORY.md index sections..."
+  for section_name in "Contacts" "Workflows" "Preferences"; do
+    if ! grep -q "### ${section_name}" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
+      if [ "$DRY_RUN" = "true" ]; then
+        echo "   [DRY RUN] Would add: ### ${section_name} section"
+      else
+        case "$section_name" in
+          Contacts)
+            INDEX_TEXT="\n### Contacts (memory/contacts/)\n(one file per person/org — name, role, context, preferences, history)\n"
+            ;;
+          Workflows)
+            INDEX_TEXT="\n### Workflows (memory/workflows/)\n(pipelines, automations, multi-service processes)\n"
+            ;;
+          Preferences)
+            INDEX_TEXT="\n### Preferences (memory/preferences.md)\nCross-cutting user preferences organized by category. Updated as discovered.\n"
+            ;;
+        esac
+        # Insert before ### Runbooks or ### Daily Logs
+        if grep -q "### Runbooks" "$WORKSPACE/MEMORY.md"; then
+          sed -i "/### Runbooks/i\\${INDEX_TEXT}" "$WORKSPACE/MEMORY.md"
+        elif grep -q "### Daily Logs" "$WORKSPACE/MEMORY.md"; then
+          sed -i "/### Daily Logs/i\\${INDEX_TEXT}" "$WORKSPACE/MEMORY.md"
+        else
+          echo -e "$INDEX_TEXT" >> "$WORKSPACE/MEMORY.md"
+        fi
+        echo "   ✅ Added ### ${section_name} to MEMORY.md index"
+        UPDATED=$((UPDATED + 1))
+      fi
+    else
+      echo "   ⏭️  ### ${section_name} already in index (skipped)"
+      SKIPPED=$((SKIPPED + 1))
+    fi
+  done
+fi
+
+# Check AGENTS.md for metrics/contacts/workflows awareness
+if [ -f "$WORKSPACE/AGENTS.md" ]; then
+  if ! grep -q "contacts\|Contacts" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
+    echo "   ℹ️  AGENTS.md may need updating — new memory categories (contacts, workflows, preferences)"
+    echo "      Consider re-running install with option 2 (Full reinstall) to regenerate AGENTS.md"
+  fi
+fi
+
 echo ""
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Summary
-# ─────────────────────────────────────────────────────────────────────────────
 # ─────────────────────────────────────────────────────────────────────────────
 # New optional features (offer if not already set up)
 # ─────────────────────────────────────────────────────────────────────────────
