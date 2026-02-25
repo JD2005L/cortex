@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.0.0"
+OPENCORTEX_VERSION="3.0.2"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -228,18 +228,20 @@ EOPR
 )
 
   PRINCIPLE_TEXTS["P4"]=$(cat <<'EOPR'
-### P4: Tool Shed
-All tools, APIs, access methods, and capabilities SHALL be documented in TOOLS.md with goal-oriented abilities descriptions. When given a new tool during work, immediately add it.
-**Creation:** When you access a new system, API, or resource more than once — or when given access to something that will clearly recur — proactively create the tool entry, bridge doc, or helper script. Do not wait to be asked. The bar is: if future-me would need to figure this out again, build the tool now.
+### P4: Tool Shed & Workflows
+All tools, APIs, access methods, and capabilities SHALL be documented in TOOLS.md with goal-oriented abilities descriptions. When given a new tool during work, immediately add it. Document workflows and pipelines in memory/workflows/ with clear descriptions of what they do, how they connect, and how to operate them.
+**Creation:** When you access a new system, API, or resource more than once — or when given access to something that will clearly recur — proactively create the tool entry, bridge doc, or helper script. When a multi-service workflow is described or used, document it in memory/workflows/. Do not wait to be asked.
 **Enforcement:** After using any CLI tool, API, or service — before ending the task — verify it exists in TOOLS.md. If not, add it immediately. Do not defer to distillation.
 EOPR
 )
 
   PRINCIPLE_TEXTS["P5"]=$(cat <<'EOPR'
-### P5: Capture Decisions
-When the user makes a decision or states a preference, immediately record it in the relevant file with reasoning. Never re-ask something already decided. Format: **Decision:** [what] — [why] (date)
-**Recognition:** Decisions include: explicit choices, stated preferences, architectural directions, and workflow rules. If the user expresses an opinion that would affect future work, that is a decision — capture it.
-**Enforcement:** Before ending any conversation with substantive work, scan for uncaptured decisions. If any, write them before closing.
+### P5: Capture Decisions & Preferences
+When the user makes a decision or states a preference, immediately record it. Decisions go in the relevant project/memory file. Preferences go in memory/preferences.md under the right category. Never re-ask something already decided or stated.
+**Decisions format:** **Decision:** [what] — [why] (date) — in the relevant project or memory file.
+**Preferences format:** **Preference:** [what] — [context/reasoning] (date) — in memory/preferences.md under the matching category (Communication, Code & Technical, Workflow & Process, Scheduling & Time, Tools & Services, Content & Media, Environment & Setup).
+**Recognition:** Decisions include: explicit choices, architectural directions, and workflow rules. Preferences include: stated likes/dislikes, communication style preferences, tool preferences, formatting preferences, and any opinion that would affect future work. If the user says "I prefer X" or "always do Y" or "I don't like Z" — that is a preference. Capture it immediately.
+**Enforcement:** Before ending any conversation with substantive work, scan for uncaptured decisions AND preferences. If any, write them before closing.
 EOPR
 )
 
@@ -264,17 +266,58 @@ Before telling the user you cannot do something, or asking them to do it manuall
 EOPR
 )
 
-  # Collect missing principles
+  # Collect missing or outdated principles
   MISSING_PRINCIPLES=()
+  OUTDATED_PRINCIPLES=()
   for pnum in P1 P2 P3 P4 P5 P6 P7 P8; do
     if grep -q "^### ${pnum}:" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
-      echo "   ⏭️  ${pnum} already exists (skipped)"
-      SKIPPED=$((SKIPPED + 1))
+      # Check if the principle title matches the latest version
+      local current_title
+      current_title=$(grep "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1)
+      local expected_title
+      expected_title=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | head -1)
+      if [ "$current_title" != "$expected_title" ]; then
+        echo "   🔄 ${pnum} outdated — will update"
+        OUTDATED_PRINCIPLES+=("$pnum")
+      else
+        echo "   ⏭️  ${pnum} already exists (skipped)"
+        SKIPPED=$((SKIPPED + 1))
+      fi
     else
       echo "   ⚠️  ${pnum} missing — will add"
       MISSING_PRINCIPLES+=("$pnum")
     fi
   done
+
+  # Replace outdated principles in-place
+  if [ ${#OUTDATED_PRINCIPLES[@]} -gt 0 ]; then
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would update principles: ${OUTDATED_PRINCIPLES[*]}"
+    else
+      for pnum in "${OUTDATED_PRINCIPLES[@]}"; do
+        # Find the start and end line of the existing principle block
+        local start_line end_line next_section
+        start_line=$(grep -n "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+        # Find the next ### or ## heading after start_line
+        next_section=$(tail -n +"$((start_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^###\|^## " | head -1 | cut -d: -f1)
+        if [ -n "$next_section" ]; then
+          end_line=$((start_line + next_section - 1))
+        else
+          end_line=$(wc -l < "$WORKSPACE/MEMORY.md")
+        fi
+        # Replace the block
+        local tmp_mem
+        tmp_mem=$(mktemp)
+        head -n "$((start_line - 1))" "$WORKSPACE/MEMORY.md" > "$tmp_mem"
+        echo "${PRINCIPLE_TEXTS[$pnum]}" >> "$tmp_mem"
+        echo "" >> "$tmp_mem"
+        tail -n "+$((end_line + 1))" "$WORKSPACE/MEMORY.md" >> "$tmp_mem"
+        mv "$tmp_mem" "$WORKSPACE/MEMORY.md"
+        echo "   ✅ Updated ${pnum}"
+        UPDATED=$((UPDATED + 1))
+      done
+    fi
+  fi
 
   if [ ${#MISSING_PRINCIPLES[@]} -gt 0 ]; then
     if [ "$DRY_RUN" = "true" ]; then
