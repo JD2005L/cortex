@@ -83,7 +83,7 @@ echo ""
 # --- Principles ---
 echo "📜 Principles:"
 if [ -f "$WORKSPACE/MEMORY.md" ]; then
-  P_COUNT=$(grep -c "^### P" "$WORKSPACE/MEMORY.md" 2>/dev/null || echo "0")
+  P_COUNT=$(grep -c "^### P[0-9]" "$WORKSPACE/MEMORY.md" 2>/dev/null || echo "0")
   if [ "$P_COUNT" -ge 7 ]; then
     check "$P_COUNT principles found in MEMORY.md" "ok"
   elif [ "$P_COUNT" -ge 1 ]; then
