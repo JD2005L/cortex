@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.0.4"
+OPENCORTEX_VERSION="3.0.5"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -295,26 +295,41 @@ EOPR
       echo "   [DRY RUN] Would update principles: ${OUTDATED_PRINCIPLES[*]}"
     else
       for pnum in "${OUTDATED_PRINCIPLES[@]}"; do
-        # Find the start and end line of the existing principle block
-        start_line=""; end_line=""; next_section=""
-        start_line=$(grep -n "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
-        # Find the next ### or ## heading after start_line
-        next_section=$(tail -n +"$((start_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^###\|^## " | head -1 | cut -d: -f1)
-        if [ -n "$next_section" ]; then
-          end_line=$((start_line + next_section - 1))
+        # Show what changed
+        current_title=$(grep "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1)
+        expected_title=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | head -1)
+        echo ""
+        echo "   ${pnum} title change:"
+        echo "     Current: $current_title"
+        echo "     New:     $expected_title"
+        echo ""
+        echo "   ⚠️  Replacing will overwrite any custom additions you made to this principle."
+        read -p "   Update ${pnum}? (y/N): " UPDATE_PRINCIPLE
+        UPDATE_PRINCIPLE=$(echo "$UPDATE_PRINCIPLE" | tr '[:upper:]' '[:lower:]')
+        if [ "$UPDATE_PRINCIPLE" = "y" ] || [ "$UPDATE_PRINCIPLE" = "yes" ]; then
+          # Find the start and end line of the existing principle block
+          start_line=""; end_line=""; next_section=""
+          start_line=$(grep -n "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+          # Find the next ### or ## heading after start_line
+          next_section=$(tail -n +"$((start_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^###\|^## " | head -1 | cut -d: -f1)
+          if [ -n "$next_section" ]; then
+            end_line=$((start_line + next_section - 1))
+          else
+            end_line=$(wc -l < "$WORKSPACE/MEMORY.md")
+          fi
+          # Replace the block
+          tmp_mem=$(mktemp)
+          head -n "$((start_line - 1))" "$WORKSPACE/MEMORY.md" > "$tmp_mem"
+          echo "${PRINCIPLE_TEXTS[$pnum]}" >> "$tmp_mem"
+          echo "" >> "$tmp_mem"
+          tail -n "+$((end_line + 1))" "$WORKSPACE/MEMORY.md" >> "$tmp_mem"
+          mv "$tmp_mem" "$WORKSPACE/MEMORY.md"
+          echo "   ✅ Updated ${pnum}"
+          UPDATED=$((UPDATED + 1))
         else
-          end_line=$(wc -l < "$WORKSPACE/MEMORY.md")
+          echo "   ⏭️  Kept existing ${pnum}"
+          SKIPPED=$((SKIPPED + 1))
         fi
-        # Replace the block
-        tmp_mem=""
-        tmp_mem=$(mktemp)
-        head -n "$((start_line - 1))" "$WORKSPACE/MEMORY.md" > "$tmp_mem"
-        echo "${PRINCIPLE_TEXTS[$pnum]}" >> "$tmp_mem"
-        echo "" >> "$tmp_mem"
-        tail -n "+$((end_line + 1))" "$WORKSPACE/MEMORY.md" >> "$tmp_mem"
-        mv "$tmp_mem" "$WORKSPACE/MEMORY.md"
-        echo "   ✅ Updated ${pnum}"
-        UPDATED=$((UPDATED + 1))
       done
     fi
   fi
