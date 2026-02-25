@@ -22,6 +22,9 @@ Default OpenClaw memory is a flat MEMORY.md that grows unbounded. Context fills 
 | USER.md | Yes | Human's preferences | < 1KB |
 | BOOTSTRAP.md | Yes | Session startup checklist | < 0.5KB |
 | memory/projects/*.md | On demand | Per-project knowledge | Any |
+| memory/contacts/*.md | On demand | Per-person/org knowledge | Any |
+| memory/workflows/*.md | On demand | Per-workflow/pipeline knowledge | Any |
+| memory/preferences.md | On demand | Cross-cutting user preferences by category | Any |
 | memory/runbooks/*.md | On demand | Procedures for sub-agents | Any |
 | memory/YYYY-MM-DD.md | Current day | Working log | Any |
 | memory/archive/*.md | Via search | Historical logs | Any |
@@ -34,22 +37,44 @@ The nightly cron reads daily logs and routes each piece of information:
 |-----------------|-------------|
 | Project work, features, bugs | memory/projects/{project}.md |
 | New tool descriptions and capabilities | TOOLS.md (sensitive values → vault) |
-| Infrastructure changes | INFRA.md |
+| Infrastructure changes | INFRA.md (if OPENCORTEX_INFRA_COLLECT=1) |
+| People and organizations mentioned | memory/contacts/{name}.md |
+| Workflows and pipelines described | memory/workflows/{name}.md |
+| Stated preferences and opinions | memory/preferences.md (categorized) |
+| Decisions and architectural directions | Relevant project file or MEMORY.md |
 | New principles, lessons | MEMORY.md |
-| User preferences, decisions | USER.md or relevant project file |
+| User info and communication style | USER.md |
 | Scheduled job changes | MEMORY.md jobs table |
 | Repeatable procedures | memory/runbooks/ |
+
+## Preference Categories
+
+Preferences in `memory/preferences.md` are organized by category:
+
+| Category | Examples |
+|----------|---------|
+| Communication | "No verbose explanations", "Direct messages only" |
+| Code & Technical | "Detailed commit messages", "Prefer TypeScript" |
+| Workflow & Process | "Check for messages before pushing", "Batch commits" |
+| Scheduling & Time | "Don't schedule before 9 AM", "Prefer async" |
+| Tools & Services | "Use VS Code over Vim", "Prefer Brave over Chrome" |
+| Content & Media | "720p minimum", "No dubbed content" |
+| Environment & Setup | "Dark mode everywhere", "Dual monitor layout" |
+
+Format: `**Preference:** [what] — [context/reasoning] (date)`
+
+Preferences are auto-captured from conversation when the user says "I prefer", "always do", "I don't like", etc. Contradicted preferences are updated (not duplicated).
 
 ## Compounding Effect
 
 ```
-Week 1: Agent knows basics, asks lots of questions
-Week 4: Agent has project history, knows tools, follows decisions
-Week 12: Agent has deep institutional knowledge, patterns, runbooks
+Week 1:  Agent knows basics, asks lots of questions
+Week 4:  Agent has project history, knows tools, follows decisions, remembers preferences
+Week 12: Agent has deep institutional knowledge, patterns, runbooks, contact history
 Week 52: Agent knows more about the setup than most humans would remember
 ```
 
-The key insight: **daily distillation + weekly synthesis + decision capture** means the agent gets better at a rate proportional to how much it's used. Unlike raw log accumulation which just fills context, structured knowledge compounds.
+The key insight: **daily distillation + weekly synthesis + decision/preference capture** means the agent gets better at a rate proportional to how much it's used. Unlike raw log accumulation which just fills context, structured knowledge compounds.
 
 ## Common Customizations
 

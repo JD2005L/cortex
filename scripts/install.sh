@@ -240,6 +240,9 @@ Live in MEMORY.md under 🔴 PRINCIPLES. Follow them always.
 - TOOLS.md — Tool shed with abilities descriptions
 - INFRA.md — Infrastructure atlas
 - memory/projects/*.md — Per-project knowledge
+- memory/contacts/*.md — Per-person/org knowledge
+- memory/workflows/*.md — Per-workflow/pipeline knowledge
+- memory/preferences.md — Cross-cutting user preferences by category
 - memory/runbooks/*.md — Repeatable procedures
 - memory/archive/*.md — Archived daily logs
 - memory/YYYY-MM-DD.md — Today'"'"'s working log

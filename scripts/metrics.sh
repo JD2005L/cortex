@@ -64,18 +64,17 @@ count_grep_lines() {
 # m_tools m_failures m_debriefs m_projects m_archive m_principles m_core_files
 # m_cron_jobs m_infra_entries
 snapshot_metrics() {
-  m_knowledge_files=$(( $(count_files "$WORKSPACE/memory/projects") + $(count_files "$WORKSPACE/memory/runbooks") ))
+  m_knowledge_files=$(( $(count_files "$WORKSPACE/memory/projects") + $(count_files "$WORKSPACE/memory/contacts") + $(count_files "$WORKSPACE/memory/workflows") + $(count_files "$WORKSPACE/memory/runbooks") ))
   if [ -d "$WORKSPACE/memory" ]; then
     m_knowledge_files=$(( m_knowledge_files + $(trimnum "$(find "$WORKSPACE/memory" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)") ))
   fi
 
   local kb=0
-  if [ -d "$WORKSPACE/memory/projects" ]; then
-    kb=$(( kb + $(trimnum "$(find "$WORKSPACE/memory/projects" -name "*.md" -type f -exec cat {} + 2>/dev/null | wc -c)") ))
-  fi
-  if [ -d "$WORKSPACE/memory/runbooks" ]; then
-    kb=$(( kb + $(trimnum "$(find "$WORKSPACE/memory/runbooks" -name "*.md" -type f -exec cat {} + 2>/dev/null | wc -c)") ))
-  fi
+  for kdir in projects contacts workflows runbooks; do
+    if [ -d "$WORKSPACE/memory/$kdir" ]; then
+      kb=$(( kb + $(trimnum "$(find "$WORKSPACE/memory/$kdir" -name "*.md" -type f -exec cat {} + 2>/dev/null | wc -c)") ))
+    fi
+  done
   kb=$(( kb + $(trimnum "$(find "$WORKSPACE/memory" -maxdepth 1 -name "*.md" -type f -exec cat {} + 2>/dev/null | wc -c)") ))
   m_knowledge_kb=$(( kb / 1024 ))
 

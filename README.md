@@ -202,7 +202,7 @@ Key names are validated on set (alphanumeric + underscores only).
 
 The installer (`scripts/install.sh`) is a single bash script that:
 - Creates markdown files (only if they don't already exist)
-- Creates directories (`memory/projects/`, `memory/runbooks/`, `memory/archive/`)
+- Creates directories (`memory/projects/`, `memory/contacts/`, `memory/workflows/`, `memory/runbooks/`, `memory/archive/`)
 - Registers OpenClaw cron jobs via `openclaw cron add`
 - Optionally copies bundled `git-backup.sh` and `vault.sh` scripts to the workspace
 
@@ -246,7 +246,7 @@ If enabled during install, OpenCortex tracks your agent's knowledge growth over 
 
 | Metric | What It Measures |
 |--------|-----------------|
-| Knowledge files | Total files in `memory/projects/`, `memory/runbooks/`, and `memory/` |
+| Knowledge files | Total files in `memory/projects/`, `memory/contacts/`, `memory/workflows/`, `memory/runbooks/`, and `memory/` |
 | Knowledge size (KB) | Total size of knowledge files |
 | Decisions captured | `**Decision:**` entries across all memory files |
 | Preferences captured | `**Preference:**` entries in `memory/preferences.md` |
