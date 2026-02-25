@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.0.3"
+OPENCORTEX_VERSION="3.0.4"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -272,9 +272,9 @@ EOPR
   for pnum in P1 P2 P3 P4 P5 P6 P7 P8; do
     if grep -q "^### ${pnum}:" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
       # Check if the principle title matches the latest version
-      local current_title
+      current_title=""
       current_title=$(grep "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1)
-      local expected_title
+      expected_title=""
       expected_title=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | head -1)
       if [ "$current_title" != "$expected_title" ]; then
         echo "   🔄 ${pnum} outdated — will update"
@@ -296,7 +296,7 @@ EOPR
     else
       for pnum in "${OUTDATED_PRINCIPLES[@]}"; do
         # Find the start and end line of the existing principle block
-        local start_line end_line next_section
+        start_line=""; end_line=""; next_section=""
         start_line=$(grep -n "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
         # Find the next ### or ## heading after start_line
         next_section=$(tail -n +"$((start_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^###\|^## " | head -1 | cut -d: -f1)
@@ -306,7 +306,7 @@ EOPR
           end_line=$(wc -l < "$WORKSPACE/MEMORY.md")
         fi
         # Replace the block
-        local tmp_mem
+        tmp_mem=""
         tmp_mem=$(mktemp)
         head -n "$((start_line - 1))" "$WORKSPACE/MEMORY.md" > "$tmp_mem"
         echo "${PRINCIPLE_TEXTS[$pnum]}" >> "$tmp_mem"
