@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.1.2"
+OPENCORTEX_VERSION="3.1.3"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
