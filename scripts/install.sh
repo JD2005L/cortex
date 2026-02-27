@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.1.3"
+OPENCORTEX_VERSION="3.1.4"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -301,7 +301,12 @@ else
   echo "   ⏭️  AGENTS.md already exists"
 fi
 
-create_if_missing "$WORKSPACE/MEMORY.md" '# MEMORY.md — Core Memory
+# MEMORY.md needs special handling: create if missing, OR inject principles if exists without them
+if [ ! -f "$WORKSPACE/MEMORY.md" ]; then
+  echo "   ✅ Creating MEMORY.md"
+  if [ "$DRY_RUN" != "true" ]; then
+    cat > "$WORKSPACE/MEMORY.md" << 'MEMEOF'
+# MEMORY.md — Core Memory
 
 ## 🔴 PRINCIPLES (always loaded, always followed)
 
@@ -377,7 +382,72 @@ Cross-cutting user preferences organized by category. Updated as discovered.
 
 ### Daily Logs
 memory/archive/YYYY-MM-DD.md — Archived daily logs
-memory/YYYY-MM-DD.md — Current daily log (distilled nightly)'
+memory/YYYY-MM-DD.md — Current daily log (distilled nightly)
+MEMEOF
+  else
+    echo "   [DRY RUN] Would create MEMORY.md"
+  fi
+elif ! grep -q "PRINCIPLES" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
+  echo "   📝 MEMORY.md exists but has no PRINCIPLES section — injecting..."
+  if [ "$DRY_RUN" != "true" ]; then
+    PRINCIPLES_BLOCK=$(cat << 'PREOF'
+
+## 🔴 PRINCIPLES (always loaded, always followed)
+
+### P1: Delegate First
+Assess every task for sub-agent delegation before starting. Stay available.
+- **Haiku:** File ops, searches, data extraction, simple scripts, monitoring
+- **Sonnet:** Multi-step work, code writing, debugging, research
+- **Opus:** Complex reasoning, architecture decisions, sensitive ops
+- **Keep main thread for:** Conversation, decisions, confirmations, quick answers
+
+### P2: Write It Down
+Do not mentally note — commit to memory files. Update indexes after significant work.
+
+### P3: Ask Before External Actions
+Emails, public posts, destructive ops — get confirmation first.
+
+### P4: Tool Shed & Workflows
+All tools, APIs, access methods, and capabilities SHALL be documented in TOOLS.md with goal-oriented abilities descriptions. When given a new tool during work, immediately add it. Document workflows and pipelines in memory/workflows/ with clear descriptions of what they do, how they connect, and how to operate them.
+**Creation:** When you access a new system, API, or resource more than once — or when given access to something that will clearly recur — proactively create the tool entry, bridge doc, or helper script. When a multi-service workflow is described or used, document it in memory/workflows/. Do not wait to be asked.
+**Enforcement:** After using any CLI tool, API, or service — before ending the task — verify it exists in TOOLS.md. If not, add it immediately. Do not defer to distillation.
+
+### P5: Capture Decisions & Preferences
+When the user makes a decision or states a preference, immediately record it. Decisions go in the relevant project/memory file. Preferences go in memory/preferences.md under the right category. Never re-ask something already decided or stated.
+**Decisions format:** **Decision:** [what] — [why] (date) — in the relevant project or memory file.
+**Preferences format:** **Preference:** [what] — [context/reasoning] (date) — in memory/preferences.md under the matching category (Communication, Code & Technical, Workflow & Process, Scheduling & Time, Tools & Services, Content & Media, Environment & Setup).
+**Recognition:** Decisions include: explicit choices, architectural directions, and workflow rules. Preferences include: stated likes/dislikes, communication style preferences, tool preferences, formatting preferences, and any opinion that would affect future work. Preferences also include phrases like 'I prefer', 'always do', 'I want', or similar signals. Capture them immediately.
+**Enforcement:** Before ending any conversation with substantive work, scan for uncaptured decisions AND preferences. If any, write them before closing.
+
+### P6: Sub-agent Debrief
+Sub-agents MUST write a brief debrief to memory/YYYY-MM-DD.md before completing. Include: what was done, what was learned, any issues.
+**Recovery:** If a sub-agent fails, times out, or is killed before debriefing, the parent agent writes the debrief on its behalf noting the failure mode. No delegated work should vanish from memory.
+
+### P7: Log Failures
+When something fails or the user corrects you, immediately append to the daily log with ❌ FAILURE: or 🔧 CORRECTION: tags. Include: what happened, why it failed, what fixed it. Nightly distillation routes these to the right file.
+**Root cause:** Do not just log what happened — log *why* it happened and what would prevent it next time. If it is a systemic issue (missing principle, bad assumption, tool gap), propose a fix immediately.
+
+### P8: Check the Shed First
+Before telling the user you cannot do something, or asking them to do it manually, CHECK your resources: TOOLS.md, INFRA.md, memory/projects/, runbooks, and any bridge docs. If a tool, API, credential, or access method exists that could accomplish the task — use it. The shed exists so you do not make the user do work you are equipped to handle.
+**Enforcement:** Nightly audit scans for instances where the agent deferred work to the user that could have been done via documented tools.
+
+PREOF
+)
+    # Inject after the first heading line
+    FIRST_LINE=$(head -1 "$WORKSPACE/MEMORY.md")
+    {
+      echo "$FIRST_LINE"
+      echo "$PRINCIPLES_BLOCK"
+      echo ""
+      tail -n +2 "$WORKSPACE/MEMORY.md"
+    } > "$WORKSPACE/MEMORY.md.tmp" && mv "$WORKSPACE/MEMORY.md.tmp" "$WORKSPACE/MEMORY.md"
+    echo "   ✅ Principles injected into existing MEMORY.md"
+  else
+    echo "   [DRY RUN] Would inject PRINCIPLES into existing MEMORY.md"
+  fi
+else
+  echo "   ⏭️  MEMORY.md already exists with PRINCIPLES (skipped)"
+fi
 
 create_if_missing "$WORKSPACE/TOOLS.md" '# TOOLS.md — Tool Shed
 
