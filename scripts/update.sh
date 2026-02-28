@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.16"
+OPENCORTEX_VERSION="3.5.17"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -129,15 +129,21 @@ if command -v openclaw &>/dev/null; then
 
   if [ -n "$DAILY_ID" ]; then
     CURRENT_DAILY_MSG=$(get_cron_msg "$DAILY_ID")
-    if [ "$CURRENT_DAILY_MSG" = "$DAILY_MSG" ]; then
-      echo "   ⏭️  'Daily Memory Distillation' message already current"
+    # Check if model override exists (anything other than "default" or empty)
+    DAILY_MODEL=$(echo "$CRON_JSON" | tr '\n' ' ' | grep -oP "\"id\":\\s*\"${DAILY_ID}\"[^}]*\"model\":\\s*\"[^\"]*\"" | grep -oP '"model":\s*"\K[^"]*' || true)
+    DAILY_HAS_MODEL=false
+    if [ -n "$DAILY_MODEL" ] && [ "$DAILY_MODEL" != "default" ]; then
+      DAILY_HAS_MODEL=true
+    fi
+    if [ "$CURRENT_DAILY_MSG" = "$DAILY_MSG" ] && [ "$DAILY_HAS_MODEL" = false ]; then
+      echo "   ⏭️  'Daily Memory Distillation' already current"
       SKIPPED=$((SKIPPED + 1))
     elif [ "$DRY_RUN" = "true" ]; then
       echo "   [DRY RUN] Would update 'Daily Memory Distillation' (id: $DAILY_ID) message"
       UPDATED=$((UPDATED + 1))
     else
-      openclaw cron edit "$DAILY_ID" --message "$DAILY_MSG" 2>/dev/null \
-        && echo "   ✅ Updated 'Daily Memory Distillation' cron message" \
+      openclaw cron edit "$DAILY_ID" --message "$DAILY_MSG" --model "" 2>/dev/null \
+        && echo "   ✅ Updated 'Daily Memory Distillation' cron (message + cleared model override)" \
         && UPDATED=$((UPDATED + 1)) \
         || echo "   ⚠️  Could not update 'Daily Memory Distillation' — run manually: openclaw cron edit $DAILY_ID --message '...'"
     fi
@@ -148,15 +154,20 @@ if command -v openclaw &>/dev/null; then
 
   if [ -n "$WEEKLY_ID" ]; then
     CURRENT_WEEKLY_MSG=$(get_cron_msg "$WEEKLY_ID")
-    if [ "$CURRENT_WEEKLY_MSG" = "$WEEKLY_MSG" ]; then
-      echo "   ⏭️  'Weekly Synthesis' message already current"
+    WEEKLY_MODEL=$(echo "$CRON_JSON" | tr '\n' ' ' | grep -oP "\"id\":\\s*\"${WEEKLY_ID}\"[^}]*\"model\":\\s*\"[^\"]*\"" | grep -oP '"model":\s*"\K[^"]*' || true)
+    WEEKLY_HAS_MODEL=false
+    if [ -n "$WEEKLY_MODEL" ] && [ "$WEEKLY_MODEL" != "default" ]; then
+      WEEKLY_HAS_MODEL=true
+    fi
+    if [ "$CURRENT_WEEKLY_MSG" = "$WEEKLY_MSG" ] && [ "$WEEKLY_HAS_MODEL" = false ]; then
+      echo "   ⏭️  'Weekly Synthesis' already current"
       SKIPPED=$((SKIPPED + 1))
     elif [ "$DRY_RUN" = "true" ]; then
       echo "   [DRY RUN] Would update 'Weekly Synthesis' (id: $WEEKLY_ID) message"
       UPDATED=$((UPDATED + 1))
     else
-      openclaw cron edit "$WEEKLY_ID" --message "$WEEKLY_MSG" 2>/dev/null \
-        && echo "   ✅ Updated 'Weekly Synthesis' cron message" \
+      openclaw cron edit "$WEEKLY_ID" --message "$WEEKLY_MSG" --model "" 2>/dev/null \
+        && echo "   ✅ Updated 'Weekly Synthesis' cron (message + cleared model override)" \
         && UPDATED=$((UPDATED + 1)) \
         || echo "   ⚠️  Could not update 'Weekly Synthesis' — run manually: openclaw cron edit $WEEKLY_ID --message '...'"
     fi
