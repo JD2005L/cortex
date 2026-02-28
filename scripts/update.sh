@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.11"
+OPENCORTEX_VERSION="3.5.12"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -681,7 +681,7 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
         # Use fixed-string grep to handle special chars in headers like (memory/contacts/)
         sub_start=$(grep -nF "$sub_header" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
         [ -z "$sub_start" ] && continue
-        sub_next=$(tail -n "+$((sub_start + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### \|^## " | head -1 | cut -d: -f1)
+        sub_next=$(tail -n "+$((sub_start + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### \|^## " | head -1 | cut -d: -f1 || true)
         if [ -n "$sub_next" ]; then
           sub_end=$((sub_start + sub_next - 1))
         else
@@ -723,12 +723,14 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
               UPDATED=$((UPDATED + 1))
 
               # Recalculate line numbers since file changed
-              MEM_INDEX_START=$(grep -n "^## Memory Index" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
-              MEM_INDEX_END_TMP=$(tail -n "+$((MEM_INDEX_START + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^## " | head -1 | cut -d: -f1)
-              if [ -n "$MEM_INDEX_END_TMP" ]; then
-                MEM_INDEX_END=$((MEM_INDEX_START + MEM_INDEX_END_TMP - 1))
-              else
-                MEM_INDEX_END=$(wc -l < "$WORKSPACE/MEMORY.md")
+              MEM_INDEX_START=$(grep -n "^## Memory Index" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1 || true)
+              if [ -n "$MEM_INDEX_START" ]; then
+                MEM_INDEX_END_TMP=$(tail -n "+$((MEM_INDEX_START + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^## " | head -1 | cut -d: -f1 || true)
+                if [ -n "$MEM_INDEX_END_TMP" ]; then
+                  MEM_INDEX_END=$((MEM_INDEX_START + MEM_INDEX_END_TMP - 1))
+                else
+                  MEM_INDEX_END=$(wc -l < "$WORKSPACE/MEMORY.md")
+                fi
               fi
             fi
           else
