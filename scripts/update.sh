@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.3"
+OPENCORTEX_VERSION="3.5.4"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -569,23 +569,77 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
   done < <(grep "^## " "$WORKSPACE/MEMORY.md" | grep -v "^## 🔴")
 
   if [ -n "$NON_STANDARD" ]; then
-    echo "   ⚠️  Found non-standard ## sections in MEMORY.md:"
+    echo "   Found non-standard ## sections in MEMORY.md:"
     printf "   %b" "$NON_STANDARD" | sed 's/^/      /'
     echo "   MEMORY.md should only contain: 🔴 PRINCIPLES, ## Identity, ## Memory Index"
-    echo "   Non-standard sections should be moved to dedicated memory files."
-    echo "   (The weekly synthesis will handle this automatically on next run.)"
+    echo ""
+
+    # Move each non-standard section to its own file
+    while IFS= read -r ns_line; do
+      [ -z "$ns_line" ] && continue
+      ns_name=$(echo "$ns_line" | sed 's/^## //')
+      # Sanitize for filename: lowercase, spaces to hyphens, strip special chars
+      ns_file=$(echo "$ns_name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+      ns_dest="$WORKSPACE/memory/${ns_file}.md"
+
+      # Extract section content
+      ns_start=$(grep -n "^## ${ns_name}$" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+      [ -z "$ns_start" ] && continue
+      ns_next=$(tail -n "+$((ns_start + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^## " | head -1 | cut -d: -f1)
+      if [ -n "$ns_next" ]; then
+        ns_end=$((ns_start + ns_next - 1))
+      else
+        ns_end=$(wc -l < "$WORKSPACE/MEMORY.md")
+      fi
+      ns_content=$(sed -n "${ns_start},${ns_end}p" "$WORKSPACE/MEMORY.md")
+
+      echo "   📦 \"## ${ns_name}\" → memory/${ns_file}.md"
+      if ask_yn "   Move this section? (Y/n): " y; then
+        if [ "$DRY_RUN" != "true" ]; then
+          if [ -f "$ns_dest" ]; then
+            echo "" >> "$ns_dest"
+            echo "$ns_content" >> "$ns_dest"
+            echo "   ✅ Appended to existing ${ns_dest##*/}"
+          else
+            echo "# ${ns_name}" > "$ns_dest"
+            echo "" >> "$ns_dest"
+            # Write body (skip the ## header line)
+            echo "$ns_content" | tail -n +2 >> "$ns_dest"
+            echo "   ✅ Created memory/${ns_file}.md"
+          fi
+
+          # Remove from MEMORY.md
+          tmp_mem=$(mktemp)
+          # Keep lines before section, skip section, keep lines after
+          head -n "$((ns_start - 1))" "$WORKSPACE/MEMORY.md" > "$tmp_mem"
+          if [ "$ns_end" -lt "$(wc -l < "$WORKSPACE/MEMORY.md")" ]; then
+            tail -n "+$((ns_end + 1))" "$WORKSPACE/MEMORY.md" >> "$tmp_mem"
+          fi
+          mv "$tmp_mem" "$WORKSPACE/MEMORY.md"
+          echo "   ✅ Removed from MEMORY.md"
+          UPDATED=$((UPDATED + 1))
+        fi
+      else
+        echo "   ⏭️  Kept in MEMORY.md"
+        SKIPPED=$((SKIPPED + 1))
+      fi
+    done <<< "$(printf '%b' "$NON_STANDARD")"
   else
     echo "   ⏭️  MEMORY.md structure is clean"
     SKIPPED=$((SKIPPED + 1))
   fi
 
-  # Size check
+  # Size check — after moves, re-measure
   MEM_SIZE=$(du -k "$WORKSPACE/MEMORY.md" 2>/dev/null | cut -f1)
   if [ "$MEM_SIZE" -gt 10 ]; then
-    echo "   ⚠️  MEMORY.md is ${MEM_SIZE}KB — target is < 5KB. Large MEMORY.md slows every session boot."
-    echo "   Move verbose content (project details, job tables, lessons) to memory/projects/ or other files."
+    echo "   ⚠️  MEMORY.md is still ${MEM_SIZE}KB after cleanup — target is < 5KB."
+    echo "   Remaining bloat is likely in standard sections (Key Lessons, Scheduled Jobs, etc.)."
+    echo "   Consider moving verbose tables and lists to memory/projects/ or memory/reference/ files"
+    echo "   and replacing them with brief summaries + file references in MEMORY.md."
   elif [ "$MEM_SIZE" -gt 5 ]; then
     echo "   ℹ️  MEMORY.md is ${MEM_SIZE}KB — consider trimming (target: < 5KB)"
+  else
+    echo "   ✅ MEMORY.md is ${MEM_SIZE}KB (within target)"
   fi
 fi
 echo ""
