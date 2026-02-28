@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.12"
+OPENCORTEX_VERSION="3.5.13"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -150,33 +150,6 @@ if command -v openclaw &>/dev/null; then
     echo "   ⏭️  'Weekly Synthesis' cron not found — run install.sh to create it"
     SKIPPED=$((SKIPPED + 1))
   fi
-  # Check for model overrides (can't clear via CLI, provide manual instructions)
-  echo ""
-  echo "   Checking for cron model overrides..."
-  HAS_MODEL_OVERRIDE=false
-  for CRON_NAME in "Daily Memory Distill" "Weekly Synthesis"; do
-    CRON_ID=$(get_cron_id "$CRON_NAME")
-    [ -z "$CRON_ID" ] && continue
-    CRON_DETAIL=$(openclaw cron list --json 2>/dev/null || echo "[]")
-    CRON_MODEL=$(echo "$CRON_DETAIL" | tr ',' '\n' | tr '{' '\n' | tr '}' '\n' | sed 's/^ *//' | awk -v id="$CRON_ID" '
-      /^"id"/ || /^"_id"/ { gsub(/[" ]/, ""); split($0, a, ":"); cur_id=a[2] }
-      /^"model"/ && cur_id == id { gsub(/[" ]/, ""); split($0, a, ":"); print a[2]; exit }
-    ' 2>/dev/null || true)
-    if [ -n "$CRON_MODEL" ] && [ "$CRON_MODEL" != "null" ]; then
-      echo "   ⚠️  '$CRON_NAME' ($CRON_ID) has model override: $CRON_MODEL"
-      HAS_MODEL_OVERRIDE=true
-    fi
-  done
-  if [ "$HAS_MODEL_OVERRIDE" = true ]; then
-    echo ""
-    echo "   OpenClaw CLI has no --clear-model flag. To remove model overrides manually:"
-    echo "   1. Open the TUI: openclaw"
-    echo "   2. Go to Cron Jobs → select the job → edit → clear the model field"
-    echo "   (The override is harmless if it matches your gateway default model.)"
-  else
-    echo "   ✅ No model overrides found"
-  fi
-
 else
   echo "   ⚠️  openclaw CLI not found — skipping cron updates"
   SKIPPED=$((SKIPPED + 1))
