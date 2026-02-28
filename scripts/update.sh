@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.12"
+OPENCORTEX_VERSION="3.4.13"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -943,7 +943,7 @@ echo ""
 echo "⏰ Verifying cron jobs exist..."
 if command -v openclaw >/dev/null 2>&1; then
   CRON_LIST=$(openclaw cron list 2>/dev/null || true)
-  if echo "$CRON_LIST" | grep -qi "Daily Memory Distillation"; then
+  if echo "$CRON_LIST" | grep -qi "Daily Memory Distill"; then
     echo "   ⏭️  Daily Memory Distillation cron exists"
     SKIPPED=$((SKIPPED + 1))
   else
@@ -972,7 +972,7 @@ if command -v openclaw >/dev/null 2>&1; then
       fi
     fi
   fi
-  if echo "$CRON_LIST" | grep -qi "Weekly Synthesis"; then
+  if echo "$CRON_LIST" | grep -qi "Weekly Synth"; then
     echo "   ⏭️  Weekly Synthesis cron exists"
     SKIPPED=$((SKIPPED + 1))
   else
