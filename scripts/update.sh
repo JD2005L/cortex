@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.6"
+OPENCORTEX_VERSION="3.5.7"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -150,6 +150,67 @@ if command -v openclaw &>/dev/null; then
     echo "   ⏭️  'Weekly Synthesis' cron not found — run install.sh to create it"
     SKIPPED=$((SKIPPED + 1))
   fi
+  # Check for model overrides and fix by delete + recreate
+  echo ""
+  echo "   Checking for cron model overrides..."
+  for CRON_NAME in "Daily Memory Distill" "Weekly Synthesis"; do
+    CRON_ID=$(get_cron_id "$CRON_NAME")
+    [ -z "$CRON_ID" ] && continue
+
+    # Extract model field for this cron
+    CRON_MODEL=$(echo "$CRON_JSON" | tr ',' '\n' | tr '{' '\n' | tr '}' '\n' | sed 's/^ *//' | awk -v id="$CRON_ID" '
+      /^"id"/ || /^"_id"/ { gsub(/[" ]/, ""); split($0, a, ":"); cur_id=a[2] }
+      /^"model"/ && cur_id == id { gsub(/[" ]/, ""); split($0, a, ":"); print a[2]; exit }
+    ' 2>/dev/null || true)
+
+    if [ -n "$CRON_MODEL" ] && [ "$CRON_MODEL" != "null" ]; then
+      echo "   ⚠️  '$CRON_NAME' has model override: $CRON_MODEL"
+      if ask_yn "   Fix by recreating without model override? (Y/n): " y; then
+        if [ "$DRY_RUN" != "true" ]; then
+          # Get current schedule and details
+          CRON_SCHEDULE=$(echo "$CRON_JSON" | tr ',' '\n' | tr '{' '\n' | tr '}' '\n' | sed 's/^ *//' | awk -v id="$CRON_ID" '
+            /^"id"/ || /^"_id"/ { gsub(/[" ]/, ""); split($0, a, ":"); cur_id=a[2] }
+            /^"expr"/ && cur_id == id { gsub(/["]/, ""); sub(/^expr: */, ""); print; exit }
+          ' 2>/dev/null || true)
+
+          if [ -z "$CRON_SCHEDULE" ]; then
+            echo "   ⚠️  Could not extract schedule — skipping"
+            continue
+          fi
+
+          # Determine the right message
+          if echo "$CRON_NAME" | grep -qi "distill"; then
+            RECREATE_MSG="$DAILY_MSG"
+            RECREATE_FULLNAME="Daily Memory Distillation"
+          else
+            RECREATE_MSG="$WEEKLY_MSG"
+            RECREATE_FULLNAME="Weekly Synthesis"
+          fi
+
+          # Delete old cron
+          openclaw cron delete "$CRON_ID" 2>/dev/null
+          # Recreate without model
+          openclaw cron add \
+            --name "$RECREATE_FULLNAME" \
+            --cron "$CRON_SCHEDULE" \
+            --session isolated \
+            --message "$RECREATE_MSG" 2>/dev/null \
+            && echo "   ✅ Recreated '$RECREATE_FULLNAME' without model override" \
+            && UPDATED=$((UPDATED + 1)) \
+            || echo "   ❌ Failed to recreate — may need manual fix"
+
+          # Refresh cron list for subsequent checks
+          CRON_JSON=$(openclaw cron list --json 2>/dev/null || echo "[]")
+        fi
+      else
+        SKIPPED=$((SKIPPED + 1))
+      fi
+    else
+      echo "   ✅ '$CRON_NAME' has no model override"
+      SKIPPED=$((SKIPPED + 1))
+    fi
+  done
+
 else
   echo "   ⚠️  openclaw CLI not found — skipping cron updates"
   SKIPPED=$((SKIPPED + 1))
@@ -1432,6 +1493,28 @@ else
     fi
   fi
 fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Memory search health
+# ─────────────────────────────────────────────────────────────────────────────
+echo "🔍 Checking memory search..."
+MEM_DB=$(find "$HOME/.openclaw" -name "memory*.sqlite" -o -name "memory*.db" 2>/dev/null | head -1)
+if [ -n "$MEM_DB" ]; then
+  DB_SIZE=$(du -k "$MEM_DB" 2>/dev/null | cut -f1)
+  echo "   ✅ Memory search index found (${DB_SIZE}KB)"
+  SKIPPED=$((SKIPPED + 1))
+else
+  echo "   ⚠️  No memory search index found."
+  echo "   Memory search needs an embedding provider. OpenClaw auto-detects from API keys:"
+  echo "     • OpenAI:  set OPENAI_API_KEY or models.providers.openai.apiKey"
+  echo "     • Gemini:  set GEMINI_API_KEY or models.providers.google.apiKey"
+  echo "     • Voyage:  set VOYAGE_API_KEY or models.providers.voyage.apiKey"
+  echo "     • Mistral: set MISTRAL_API_KEY or models.providers.mistral.apiKey"
+  echo "     • Local:   set agents.defaults.memorySearch.local.modelPath to a GGUF file"
+  echo "   Once configured, restart the gateway: openclaw gateway restart"
+  echo "   Docs: https://docs.openclaw.ai/concepts/memory"
+fi
+echo ""
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "   ✅ Updated: $UPDATED"
