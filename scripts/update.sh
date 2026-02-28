@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.3"
+OPENCORTEX_VERSION="3.4.4"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -24,7 +24,7 @@ fi
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-echo "🔄 OpenCortex Update"
+echo "🔄 OpenCortex Update v${OPENCORTEX_VERSION}"
 echo "   Workspace: $WORKSPACE"
 echo "   Script:    $SCRIPT_DIR"
 echo ""
