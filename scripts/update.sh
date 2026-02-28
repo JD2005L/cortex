@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.4"
+OPENCORTEX_VERSION="3.5.5"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -629,15 +629,95 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
     SKIPPED=$((SKIPPED + 1))
   fi
 
-  # Size check — after moves, re-measure
+  # Size check — after non-standard section moves, re-measure
   MEM_SIZE=$(du -k "$WORKSPACE/MEMORY.md" 2>/dev/null | cut -f1)
-  if [ "$MEM_SIZE" -gt 10 ]; then
-    echo "   ⚠️  MEMORY.md is still ${MEM_SIZE}KB after cleanup — target is < 5KB."
-    echo "   Remaining bloat is likely in standard sections (Key Lessons, Scheduled Jobs, etc.)."
-    echo "   Consider moving verbose tables and lists to memory/projects/ or memory/reference/ files"
-    echo "   and replacing them with brief summaries + file references in MEMORY.md."
-  elif [ "$MEM_SIZE" -gt 5 ]; then
-    echo "   ℹ️  MEMORY.md is ${MEM_SIZE}KB — consider trimming (target: < 5KB)"
+  if [ "$MEM_SIZE" -gt 5 ]; then
+    echo ""
+    echo "   📏 MEMORY.md is ${MEM_SIZE}KB (target: < 5KB) — checking for bloated subsections..."
+
+    # Find ### subsections under ## Memory Index that are over 10 lines
+    # These can be extracted to dedicated files with a reference left behind
+    MEM_INDEX_START=$(grep -n "^## Memory Index" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+    MEM_INDEX_END=$(tail -n "+$((MEM_INDEX_START + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^## " | head -1 | cut -d: -f1)
+    if [ -n "$MEM_INDEX_START" ]; then
+      if [ -n "$MEM_INDEX_END" ]; then
+        MEM_INDEX_END=$((MEM_INDEX_START + MEM_INDEX_END - 1))
+      else
+        MEM_INDEX_END=$(wc -l < "$WORKSPACE/MEMORY.md")
+      fi
+
+      # Extract each ### subsection and check line count
+      SUBSECTIONS=$(sed -n "${MEM_INDEX_START},${MEM_INDEX_END}p" "$WORKSPACE/MEMORY.md" | grep "^### " || true)
+      while IFS= read -r sub_header; do
+        [ -z "$sub_header" ] && continue
+        sub_name=$(echo "$sub_header" | sed 's/^### //' | sed 's/ (.*//')
+        sub_start=$(grep -n "^${sub_header}$" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+        [ -z "$sub_start" ] && continue
+        sub_next=$(tail -n "+$((sub_start + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### \|^## " | head -1 | cut -d: -f1)
+        if [ -n "$sub_next" ]; then
+          sub_end=$((sub_start + sub_next - 1))
+        else
+          sub_end=$MEM_INDEX_END
+        fi
+        sub_lines=$((sub_end - sub_start))
+
+        if [ "$sub_lines" -gt 10 ]; then
+          # Determine destination file
+          sub_file=$(echo "$sub_name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+          sub_dest="$WORKSPACE/memory/${sub_file}.md"
+
+          echo "   📦 \"### ${sub_name}\" is ${sub_lines} lines — move to memory/${sub_file}.md?"
+          if ask_yn "   Extract and replace with reference? (Y/n): " y; then
+            if [ "$DRY_RUN" != "true" ]; then
+              # Extract content (include header)
+              sub_content=$(sed -n "${sub_start},${sub_end}p" "$WORKSPACE/MEMORY.md")
+
+              if [ -f "$sub_dest" ]; then
+                echo "" >> "$sub_dest"
+                echo "$sub_content" | tail -n +2 >> "$sub_dest"
+              else
+                echo "# ${sub_name}" > "$sub_dest"
+                echo "" >> "$sub_dest"
+                echo "$sub_content" | tail -n +2 >> "$sub_dest"
+              fi
+
+              # Replace section with brief reference (keep ### header, add See reference, remove body)
+              tmp_mem=$(mktemp)
+              head -n "$sub_start" "$WORKSPACE/MEMORY.md" > "$tmp_mem"
+              echo "See \`memory/${sub_file}.md\` for details." >> "$tmp_mem"
+              echo "" >> "$tmp_mem"
+              if [ "$sub_end" -lt "$(wc -l < "$WORKSPACE/MEMORY.md")" ]; then
+                tail -n "+$((sub_end + 1))" "$WORKSPACE/MEMORY.md" >> "$tmp_mem"
+              fi
+              mv "$tmp_mem" "$WORKSPACE/MEMORY.md"
+
+              echo "   ✅ Extracted to memory/${sub_file}.md, left reference in MEMORY.md"
+              UPDATED=$((UPDATED + 1))
+
+              # Recalculate line numbers since file changed
+              MEM_INDEX_START=$(grep -n "^## Memory Index" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+              MEM_INDEX_END_TMP=$(tail -n "+$((MEM_INDEX_START + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^## " | head -1 | cut -d: -f1)
+              if [ -n "$MEM_INDEX_END_TMP" ]; then
+                MEM_INDEX_END=$((MEM_INDEX_START + MEM_INDEX_END_TMP - 1))
+              else
+                MEM_INDEX_END=$(wc -l < "$WORKSPACE/MEMORY.md")
+              fi
+            fi
+          else
+            echo "   ⏭️  Kept inline"
+            SKIPPED=$((SKIPPED + 1))
+          fi
+        fi
+      done <<< "$SUBSECTIONS"
+    fi
+
+    # Final size report
+    MEM_SIZE=$(du -k "$WORKSPACE/MEMORY.md" 2>/dev/null | cut -f1)
+    if [ "$MEM_SIZE" -gt 5 ]; then
+      echo "   ℹ️  MEMORY.md is now ${MEM_SIZE}KB — further trimming may be needed by the agent during distillation"
+    else
+      echo "   ✅ MEMORY.md trimmed to ${MEM_SIZE}KB (within target)"
+    fi
   else
     echo "   ✅ MEMORY.md is ${MEM_SIZE}KB (within target)"
   fi
