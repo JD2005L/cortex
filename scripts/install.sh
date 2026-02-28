@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.11"
+OPENCORTEX_VERSION="3.4.12"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -108,6 +108,26 @@ if [ "$DRY_RUN" = "true" ]; then
   echo ""
 fi
 
+# Helper: ask y/n question, loop until valid answer
+ask_yn() {
+  local prompt="$1"
+  local default="${2:-}"
+  local answer
+  while true; do
+    read -p "$prompt" answer
+    answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
+    case "$answer" in
+      y|yes) return 0 ;;
+      n|no) return 1 ;;
+      "")
+        if [ "$default" = "y" ]; then return 0;
+        elif [ "$default" = "n" ]; then return 1;
+        else echo "   Please enter y or n."; fi ;;
+      *) echo "   Please enter y or n." ;;
+    esac
+  done
+}
+
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
 
 # Detect timezone: env var → system → ask user
@@ -147,16 +167,25 @@ read -p "   Choose (secure/direct) [secure]: " SECRET_MODE
 SECRET_MODE=$(echo "${SECRET_MODE:-secure}" | tr '[:upper:]' '[:lower:]')
 
 echo ""
-read -p "📝 Enable voice profiling? Analyzes conversation style for ghostwriting. (y/N): " ENABLE_VOICE
-ENABLE_VOICE=$(echo "$ENABLE_VOICE" | tr '[:upper:]' '[:lower:]')
+if ask_yn "📝 Enable voice profiling? Analyzes conversation style for ghostwriting. (y/N): " n; then
+  ENABLE_VOICE="y"
+else
+  ENABLE_VOICE="n"
+fi
 
 echo ""
-read -p "🗺️  Enable infrastructure auto-collection? Cron will route infra details from daily logs to INFRA.md. (y/N): " ENABLE_INFRA
-ENABLE_INFRA=$(echo "$ENABLE_INFRA" | tr '[:upper:]' '[:lower:]')
+if ask_yn "🗺️  Enable infrastructure auto-collection? Cron will route infra details from daily logs to INFRA.md. (y/N): " n; then
+  ENABLE_INFRA="y"
+else
+  ENABLE_INFRA="n"
+fi
 
 echo ""
-read -p "📊 Enable daily metrics tracking? Tracks knowledge growth over time (read-only, no sensitive data). (y/N): " ENABLE_METRICS
-ENABLE_METRICS=$(echo "$ENABLE_METRICS" | tr '[:upper:]' '[:lower:]')
+if ask_yn "📊 Enable daily metrics tracking? Tracks knowledge growth over time (read-only, no sensitive data). (y/N): " n; then
+  ENABLE_METRICS="y"
+else
+  ENABLE_METRICS="n"
+fi
 
 echo ""
 echo "🧠 Memory loading strategy:"
@@ -598,7 +627,7 @@ Discovered preferences, organized by category. Updated by nightly distillation w
 ## Environment & Setup
 (add as discovered)'
 
-if [[ "$ENABLE_VOICE" == y* ]]; then
+if [ "$ENABLE_VOICE" = "y" ]; then
   create_if_missing "$WORKSPACE/memory/VOICE.md" '# VOICE.md — How My Human Communicates
 
 A living profile of communication style, vocabulary, and tone. Updated nightly by analyzing conversations. Used when ghostwriting on their behalf (community posts, emails, social media) — not for regular conversation.
@@ -718,8 +747,7 @@ fi
 
 # --- Git Backup (optional) ---
 echo ""
-read -p "📦 Set up git backup with secret scrubbing? (y/N): " SETUP_GIT
-if [[ "${SETUP_GIT,,}" == y* ]]; then
+if ask_yn "📦 Set up git backup with secret scrubbing? (y/N): " n; then
 
   # Copy bundled scripts (fully inspectable in the skill package)
   SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -772,7 +800,7 @@ else
 fi
 
 # --- Metrics (optional) ---
-if [[ "$ENABLE_METRICS" == y* ]]; then
+if [ "$ENABLE_METRICS" = "y" ]; then
   echo ""
   echo "📊 Setting up metrics tracking..."
 
@@ -840,7 +868,7 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔑 Opt-in feature environment variables:"
 echo ""
-if [[ "$ENABLE_VOICE" == y* ]]; then
+if [ "$ENABLE_VOICE" = "y" ]; then
   echo "   Voice profiling is enabled in the cron (you said yes)."
   echo "   To activate it at runtime, set this in your OpenClaw environment:"
   echo "     export OPENCORTEX_VOICE_PROFILE=1"
@@ -851,7 +879,7 @@ else
   echo "   To enable later: set OPENCORTEX_VOICE_PROFILE=1 in your OpenClaw environment."
   echo ""
 fi
-if [[ "$ENABLE_INFRA" == y* ]]; then
+if [ "$ENABLE_INFRA" = "y" ]; then
   echo "   Infrastructure auto-collection is enabled in the cron (you said yes)."
   echo "   To activate it at runtime, set this in your OpenClaw environment:"
   echo "     export OPENCORTEX_INFRA_COLLECT=1"

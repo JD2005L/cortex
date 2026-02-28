@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.11"
+OPENCORTEX_VERSION="3.4.12"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -20,6 +20,28 @@ if [ "$DRY_RUN" = "true" ]; then
   echo "⚠️  DRY RUN MODE — nothing will be changed."
   echo ""
 fi
+
+# Helper: ask y/n question, loop until valid answer
+# Usage: ask_yn "prompt (y/N): " [default]
+# default: y or n (what empty input means). No default = must answer.
+ask_yn() {
+  local prompt="$1"
+  local default="${2:-}"
+  local answer
+  while true; do
+    read -p "$prompt" answer
+    answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
+    case "$answer" in
+      y|yes) return 0 ;;
+      n|no) return 1 ;;
+      "") 
+        if [ "$default" = "y" ]; then return 0;
+        elif [ "$default" = "n" ]; then return 1;
+        else echo "   Please enter y or n."; fi ;;
+      *) echo "   Please enter y or n." ;;
+    esac
+  done
+}
 
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -259,9 +281,7 @@ EOPR
           echo "   📋 Custom content detected beyond the standard ${pnum}:"
           echo "$custom_lines" | sed 's/^/      /'
           echo ""
-          read -p "   Migrate custom content to P0 before updating? (Y/n): " MIGRATE
-          MIGRATE=$(echo "$MIGRATE" | tr '[:upper:]' '[:lower:]')
-          if ! [[ "$MIGRATE" == n* ]]; then
+          if ask_yn "   Migrate custom content to P0 before updating? (Y/n): " y; then
             # Find or create P0 section
             if grep -q "^### P0:" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
               # Count existing P0 sub-principles to determine next letter
@@ -292,9 +312,7 @@ EOPR
         fi
 
         echo "   ⚠️  Replacing will overwrite any custom additions you made to this principle."
-        read -p "   Update ${pnum}? (y/N): " UPDATE_PRINCIPLE
-        UPDATE_PRINCIPLE=$(echo "$UPDATE_PRINCIPLE" | tr '[:upper:]' '[:lower:]')
-        if [[ "$UPDATE_PRINCIPLE" == y* ]]; then
+        if ask_yn "   Update ${pnum}? (y/N): " n; then
           # Find the start and end line of the existing principle block
           start_line=""; end_line=""; next_section=""
           start_line=$(grep -n "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
@@ -583,9 +601,7 @@ echo "📄 Checking template files..."
 # SOUL.md
 if [ ! -f "$WORKSPACE/SOUL.md" ]; then
   echo "   ⚠️  SOUL.md is missing"
-  read -p "   Create default SOUL.md? (Y/n): " CREATE_SOUL
-  CREATE_SOUL=$(echo "$CREATE_SOUL" | tr '[:upper:]' '[:lower:]')
-  if ! [[ "$CREATE_SOUL" == n* ]]; then
+  if ask_yn "   Create default SOUL.md? (Y/n): " y; then
     if [ "$DRY_RUN" != "true" ]; then
       cat > "$WORKSPACE/SOUL.md" << 'SOULEOF'
 # SOUL.md — Who You Are
@@ -630,9 +646,7 @@ fi
 # USER.md
 if [ ! -f "$WORKSPACE/USER.md" ]; then
   echo "   ⚠️  USER.md is missing"
-  read -p "   Create default USER.md? (Y/n): " CREATE_USER
-  CREATE_USER=$(echo "$CREATE_USER" | tr '[:upper:]' '[:lower:]')
-  if ! [[ "$CREATE_USER" == n* ]]; then
+  if ask_yn "   Create default USER.md? (Y/n): " y; then
     if [ "$DRY_RUN" != "true" ]; then
       cat > "$WORKSPACE/USER.md" << 'USEREOF'
 # USER.md — About Your Human
@@ -713,9 +727,7 @@ if [ -f "$WORKSPACE/AGENTS.md" ]; then
   fi
   if [ ${#AGENTS_WARNINGS[@]} -gt 0 ]; then
     echo "   ⚠️  AGENTS.md is missing: ${AGENTS_WARNINGS[*]}"
-    read -p "   Back up current and regenerate AGENTS.md? (y/N): " REGEN_AGENTS
-    REGEN_AGENTS=$(echo "$REGEN_AGENTS" | tr '[:upper:]' '[:lower:]')
-    if [[ "$REGEN_AGENTS" == y* ]]; then
+    if ask_yn "   Back up current and regenerate AGENTS.md? (y/N): " n; then
       if [ "$DRY_RUN" != "true" ]; then
         # Extract custom sections from existing AGENTS.md before regenerating
         # Standard sections that the template provides:
@@ -865,9 +877,7 @@ if [ -f "$WORKSPACE/BOOTSTRAP.md" ]; then
   fi
   if [ ${#BOOTSTRAP_WARNINGS[@]} -gt 0 ]; then
     echo "   ⚠️  BOOTSTRAP.md is missing: ${BOOTSTRAP_WARNINGS[*]}"
-    read -p "   Back up current and regenerate BOOTSTRAP.md? (y/N): " REGEN_BOOT
-    REGEN_BOOT=$(echo "$REGEN_BOOT" | tr '[:upper:]' '[:lower:]')
-    if [[ "$REGEN_BOOT" == y* ]]; then
+    if ask_yn "   Back up current and regenerate BOOTSTRAP.md? (y/N): " n; then
       if [ "$DRY_RUN" != "true" ]; then
         # Extract custom sections from existing BOOTSTRAP.md
         BOOT_STANDARD="First-Run Checklist|Silent Replies|Sub-Agent Protocol"
@@ -938,9 +948,7 @@ if command -v openclaw >/dev/null 2>&1; then
     SKIPPED=$((SKIPPED + 1))
   else
     echo "   ⚠️  Daily Memory Distillation cron not found"
-    read -p "   Create it now? (Y/n): " CREATE_DAILY
-    CREATE_DAILY=$(echo "$CREATE_DAILY" | tr '[:upper:]' '[:lower:]')
-    if ! [[ "$CREATE_DAILY" == n* ]]; then
+    if ask_yn "   Create it now? (Y/n): " y; then
       # Detect timezone
       CRON_TZ="${CLAWD_TZ:-}"
       if [ -z "$CRON_TZ" ] && [ -f /etc/timezone ]; then
@@ -969,9 +977,7 @@ if command -v openclaw >/dev/null 2>&1; then
     SKIPPED=$((SKIPPED + 1))
   else
     echo "   ⚠️  Weekly Synthesis cron not found"
-    read -p "   Create it now? (Y/n): " CREATE_WEEKLY
-    CREATE_WEEKLY=$(echo "$CREATE_WEEKLY" | tr '[:upper:]' '[:lower:]')
-    if ! [[ "$CREATE_WEEKLY" == n* ]]; then
+    if ask_yn "   Create it now? (Y/n): " y; then
       CRON_TZ="${CRON_TZ:-${CLAWD_TZ:-UTC}}"
       if [ "$DRY_RUN" != "true" ]; then
         openclaw cron add \
@@ -1003,9 +1009,7 @@ SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Metrics
 if ! crontab -l 2>/dev/null | grep -q "metrics.sh"; then
   echo ""
-  read -p "📊 New feature: daily metrics tracking (knowledge growth over time). Enable? (y/N): " ENABLE_METRICS
-  ENABLE_METRICS=$(echo "$ENABLE_METRICS" | tr '[:upper:]' '[:lower:]')
-  if [[ "$ENABLE_METRICS" == y* ]]; then
+  if ask_yn "📊 New feature: daily metrics tracking (knowledge growth over time). Enable? (y/N): " n; then
     if [ -f "$SKILL_DIR/metrics.sh" ]; then
       if [ "$DRY_RUN" != "true" ]; then
         cp "$SKILL_DIR/metrics.sh" "$WORKSPACE/scripts/metrics.sh"
