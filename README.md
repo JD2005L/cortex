@@ -78,7 +78,8 @@ The installer detects your existing version and offers: **1) Update** (recommend
 | Reference docs (distillation, weekly-synthesis, architecture) | Checksum comparison, auto-replaced | ✅ These aren't user-edited |
 | Cron job messages | Always updated to latest template | ✅ Only the message text changes |
 | Cron model overrides | Cleared to gateway default | ✅ Fixes stale hardcoded models |
-| MEMORY.md index sections | Adds missing sections only | ✅ Existing sections untouched |
+| MEMORY.md structure (## Identity, ## Memory Index) | Adds missing core sections | ✅ Existing sections untouched |
+| MEMORY.md index (### Infrastructure through ### Daily Logs) | Adds all missing sub-sections | ✅ Existing sections untouched |
 | preferences.md | Created if missing | ✅ Existing file untouched |
 | New directories (contacts, workflows) | Created if missing | ✅ |
 | AGENTS.md, BOOTSTRAP.md, SOUL.md, USER.md | Never modified, warns if outdated | ✅ Never touched |

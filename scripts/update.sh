@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.1"
+OPENCORTEX_VERSION="3.4.2"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -516,25 +516,50 @@ fi
 # Add missing MEMORY.md index sections
 if [ -f "$WORKSPACE/MEMORY.md" ]; then
   echo "📋 Checking MEMORY.md index sections..."
-  for section_name in "Contacts" "Workflows" "Preferences"; do
+  # Check core structure sections (## level)
+  for core_section in "Identity" "Memory Index"; do
+    if ! grep -q "^## ${core_section}" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
+      if [ "$DRY_RUN" = "true" ]; then
+        echo "   [DRY RUN] Would add: ## ${core_section}"
+      else
+        case "$core_section" in
+          Identity)
+            echo -e "\n## Identity\n- **Name:** (your agent name)\n- **Human:** (your name)\n" >> "$WORKSPACE/MEMORY.md"
+            ;;
+          "Memory Index")
+            echo -e "\n## Memory Index\n" >> "$WORKSPACE/MEMORY.md"
+            ;;
+        esac
+        echo "   ✅ Added ## ${core_section}"
+        UPDATED=$((UPDATED + 1))
+      fi
+    else
+      echo "   ⏭️  ## ${core_section} exists (skipped)"
+      SKIPPED=$((SKIPPED + 1))
+    fi
+  done
+
+  # Check index sub-sections (### level)
+  declare -A INDEX_TEMPLATES
+  INDEX_TEMPLATES["Infrastructure"]="\n### Infrastructure\n- \`TOOLS.md\` — APIs, credentials, scripts, access methods\n"
+  INDEX_TEMPLATES["Projects"]="\n### Projects (memory/projects/)\n| Project | Status | File |\n|---------|--------|------|\n| (your projects) | | |\n"
+  INDEX_TEMPLATES["Scheduled Jobs"]="\n### Scheduled Jobs\n(document cron jobs and scheduled tasks here)\n"
+  INDEX_TEMPLATES["Contacts"]="\n### Contacts (memory/contacts/)\n(one file per person/org — name, role, context, preferences, history)\n"
+  INDEX_TEMPLATES["Workflows"]="\n### Workflows (memory/workflows/)\n(pipelines, automations, multi-service processes)\n"
+  INDEX_TEMPLATES["Preferences"]="\n### Preferences (memory/preferences.md)\nCross-cutting user preferences organized by category. Updated as discovered.\n"
+  INDEX_TEMPLATES["Runbooks"]="\n### Runbooks (memory/runbooks/)\nStep-by-step procedures for repeatable tasks. Sub-agents can follow these directly.\n"
+  INDEX_TEMPLATES["Daily Logs"]="\n### Daily Logs\n\`memory/YYYY-MM-DD.md\` — Working daily logs. Distilled into project files periodically.\n"
+
+  for section_name in "Infrastructure" "Projects" "Scheduled Jobs" "Contacts" "Workflows" "Preferences" "Runbooks" "Daily Logs"; do
     if ! grep -q "### ${section_name}" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
       if [ "$DRY_RUN" = "true" ]; then
         echo "   [DRY RUN] Would add: ### ${section_name} section"
       else
-        case "$section_name" in
-          Contacts)
-            INDEX_TEXT="\n### Contacts (memory/contacts/)\n(one file per person/org — name, role, context, preferences, history)\n"
-            ;;
-          Workflows)
-            INDEX_TEXT="\n### Workflows (memory/workflows/)\n(pipelines, automations, multi-service processes)\n"
-            ;;
-          Preferences)
-            INDEX_TEXT="\n### Preferences (memory/preferences.md)\nCross-cutting user preferences organized by category. Updated as discovered.\n"
-            ;;
-        esac
-        # Insert before ### Runbooks or ### Daily Logs
-        if grep -q "### Runbooks" "$WORKSPACE/MEMORY.md"; then
-          sed -i "/### Runbooks/i\\${INDEX_TEXT}" "$WORKSPACE/MEMORY.md"
+        INDEX_TEXT="${INDEX_TEMPLATES[$section_name]}"
+        # Try to insert in a sensible position
+        if [ "$section_name" = "Daily Logs" ]; then
+          # Always append at end
+          echo -e "$INDEX_TEXT" >> "$WORKSPACE/MEMORY.md"
         elif grep -q "### Daily Logs" "$WORKSPACE/MEMORY.md"; then
           sed -i "/### Daily Logs/i\\${INDEX_TEXT}" "$WORKSPACE/MEMORY.md"
         else
