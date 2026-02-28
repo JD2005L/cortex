@@ -136,6 +136,42 @@ else
 fi
 echo ""
 
+# --- Memory Search ---
+echo "🔍 Memory Search:"
+if command -v openclaw >/dev/null 2>&1; then
+  # Check if memory_search is functional by looking for the memory index
+  MEM_DB=$(find "$HOME/.openclaw" -name "memory*.sqlite" -o -name "memory*.db" 2>/dev/null | head -1)
+  if [ -n "$MEM_DB" ]; then
+    DB_SIZE=$(du -k "$MEM_DB" 2>/dev/null | cut -f1)
+    check "Memory search index exists (${DB_SIZE}KB)" "ok"
+  else
+    check "No memory search index found — embeddings may not be configured" "warn"
+  fi
+
+  # Check if memory files are being indexed (non-empty memory dir)
+  MEM_FILES=$(find "$WORKSPACE/memory" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$MEM_FILES" -gt 0 ]; then
+    check "$MEM_FILES memory files available for indexing" "ok"
+  else
+    check "No memory files found in memory/" "warn"
+  fi
+
+  # Check MEMORY.md size (should stay small for boot performance)
+  if [ -f "$WORKSPACE/MEMORY.md" ]; then
+    MEM_SIZE=$(du -k "$WORKSPACE/MEMORY.md" 2>/dev/null | cut -f1)
+    if [ "$MEM_SIZE" -le 5 ]; then
+      check "MEMORY.md is ${MEM_SIZE}KB (target: < 5KB)" "ok"
+    elif [ "$MEM_SIZE" -le 10 ]; then
+      check "MEMORY.md is ${MEM_SIZE}KB — consider trimming (target: < 5KB)" "warn"
+    else
+      check "MEMORY.md is ${MEM_SIZE}KB — too large, will slow boot (target: < 5KB)" "fail"
+    fi
+  fi
+else
+  check "openclaw not in PATH — cannot verify memory search" "warn"
+fi
+echo ""
+
 # --- Vault ---
 echo "🔐 Vault:"
 if [ -f "$WORKSPACE/scripts/vault.sh" ]; then

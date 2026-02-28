@@ -29,6 +29,7 @@ You are an AI assistant. Weekly synthesis — higher-altitude review.
       - MEMORY.md contains ONLY principles and the index — no project details, no tool docs, no preferences
       - AGENTS.md contains ONLY operating protocol — no project-specific rules or preferences
       - If anything is misplaced, move it to the correct location. Preserve all detail during the move.
+   m. **Retrieval quality check** — test memory_search with 3-5 queries based on this week's work (project names, key decisions, people mentioned). For each query, verify the top results are actually relevant. If retrieval misses information you know exists, note the gap in the weekly summary. Common causes: file too large (needs splitting), information buried in unrelated sections (needs restructuring), or embeddings not configured (needs setup). This check catches retrieval degradation before it impacts the agent's effectiveness.
 4. Write weekly summary to memory/archive/weekly-YYYY-MM-DD.md.
 
 ## Runbook Detection
