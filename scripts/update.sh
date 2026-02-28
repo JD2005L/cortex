@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.13"
+OPENCORTEX_VERSION="3.4.14"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -940,9 +940,59 @@ fi
 # Part 6: Cron jobs — verify they exist
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
-echo "⏰ Verifying cron jobs exist..."
+echo "⏰ Verifying cron jobs..."
 if command -v openclaw >/dev/null 2>&1; then
   CRON_LIST=$(openclaw cron list 2>/dev/null || true)
+
+  # Deduplicate: remove extra Daily Memory Distillation crons (keep the first)
+  DAILY_MATCHES=$(echo "$CRON_LIST" | grep -i "Daily Memory Distill" | awk '{print $1}' || true)
+  DAILY_COUNT=$(echo "$DAILY_MATCHES" | grep -c . 2>/dev/null || true)
+  if [ "$DAILY_COUNT" -gt 1 ]; then
+    echo "   🧹 Found $DAILY_COUNT 'Daily Memory Distillation' crons — removing duplicates..."
+    FIRST_DAILY=true
+    while IFS= read -r cron_id; do
+      [ -z "$cron_id" ] && continue
+      if [ "$FIRST_DAILY" = true ]; then
+        FIRST_DAILY=false
+        echo "   ⏭️  Keeping: $cron_id"
+      else
+        if [ "$DRY_RUN" != "true" ]; then
+          openclaw cron delete "$cron_id" 2>/dev/null && \
+          echo "   🗑️  Deleted duplicate: $cron_id" || true
+        else
+          echo "   [DRY RUN] Would delete duplicate: $cron_id"
+        fi
+      fi
+    done <<< "$DAILY_MATCHES"
+    UPDATED=$((UPDATED + 1))
+  fi
+
+  # Deduplicate: remove extra Weekly Synthesis crons (keep the first)
+  WEEKLY_MATCHES=$(echo "$CRON_LIST" | grep -i "Weekly Synth" | awk '{print $1}' || true)
+  WEEKLY_COUNT=$(echo "$WEEKLY_MATCHES" | grep -c . 2>/dev/null || true)
+  if [ "$WEEKLY_COUNT" -gt 1 ]; then
+    echo "   🧹 Found $WEEKLY_COUNT 'Weekly Synthesis' crons — removing duplicates..."
+    FIRST_WEEKLY=true
+    while IFS= read -r cron_id; do
+      [ -z "$cron_id" ] && continue
+      if [ "$FIRST_WEEKLY" = true ]; then
+        FIRST_WEEKLY=false
+        echo "   ⏭️  Keeping: $cron_id"
+      else
+        if [ "$DRY_RUN" != "true" ]; then
+          openclaw cron delete "$cron_id" 2>/dev/null && \
+          echo "   🗑️  Deleted duplicate: $cron_id" || true
+        else
+          echo "   [DRY RUN] Would delete duplicate: $cron_id"
+        fi
+      fi
+    done <<< "$WEEKLY_MATCHES"
+    UPDATED=$((UPDATED + 1))
+  fi
+
+  # Refresh cron list after dedup
+  CRON_LIST=$(openclaw cron list 2>/dev/null || true)
+
   if echo "$CRON_LIST" | grep -qi "Daily Memory Distill"; then
     echo "   ⏭️  Daily Memory Distillation cron exists"
     SKIPPED=$((SKIPPED + 1))
