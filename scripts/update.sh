@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.2.5"
+OPENCORTEX_VERSION="3.3.0"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -110,10 +110,10 @@ else
 
   PRINCIPLE_TEXTS["P1"]=$(cat <<'EOPR'
 ### P1: Delegate First
-Assess every task for sub-agent delegation before starting. Stay available.
-- **Haiku:** File ops, searches, data extraction, simple scripts, monitoring
-- **Sonnet:** Multi-step work, code writing, debugging, research
-- **Opus:** Complex reasoning, architecture decisions, sensitive ops
+Assess every task for sub-agent delegation before starting. Stay available. Assign sub-agents by complexity using whatever models are configured:
+- **Light:** File ops, searches, data extraction, simple scripts, monitoring, lookups
+- **Medium:** Multi-step work, code writing, debugging, research, moderate complexity
+- **Heavy:** Complex reasoning, architecture decisions, sensitive or destructive operations
 - **Keep main thread for:** Conversation, decisions, confirmations, quick answers
 EOPR
 )
@@ -185,9 +185,9 @@ EOPR
         OUTDATED_PRINCIPLES+=("$pnum")
       else
         # Title matches — check if body content has changed
-        # Extract current principle body from MEMORY.md (from ### Px: to next ### P or ---)
-        current_body=$(sed -n "/^### ${pnum}:/,/^### P[0-9]\|^---/{/^### P[0-9]/!{/^---/!p;}}" "$WORKSPACE/MEMORY.md" 2>/dev/null | sed '1d')
-        expected_body=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | sed '1d')
+        # Extract current principle block including header (from ### Px: to line before next ### P or ---)
+        current_body=$(awk "/^### ${pnum}:/{found=1} found{if(/^### P[0-9]/ && !/^### ${pnum}:/)exit; if(/^---$/)exit; print}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
+        expected_body="${PRINCIPLE_TEXTS[$pnum]}"
         current_hash=$(printf '%s' "$current_body" | tr -d '[:space:]' | md5sum | cut -d' ' -f1)
         expected_hash=$(printf '%s' "$expected_body" | tr -d '[:space:]' | md5sum | cut -d' ' -f1)
         if [ "$current_hash" != "$expected_hash" ]; then
@@ -214,8 +214,8 @@ EOPR
         current_title=$(grep "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1)
         expected_title=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | head -1)
         echo ""
-        # Extract current principle body
-        current_full=$(sed -n "/^### ${pnum}:/,/^### P[0-9]\|^---/{/^### P[0-9]/!{/^---/!p;}}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
+        # Extract current principle block for display (including header)
+        current_full=$(awk "/^### ${pnum}:/{found=1} found{if(/^### P[0-9]/ && !/^### ${pnum}:/)exit; if(/^---$/)exit; print}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
         expected_full="${PRINCIPLE_TEXTS[$pnum]}"
 
         if [ "$current_title" != "$expected_title" ]; then

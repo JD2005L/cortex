@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.2.5"
+OPENCORTEX_VERSION="3.3.0"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -256,7 +256,7 @@ Live in MEMORY.md under 🔴 PRINCIPLES. Follow them always.
 ## Delegation (P1)
 **Default action: delegate.** Before doing work, ask:
 1. Can a sub-agent do this? → Yes for most things
-2. What calibre? → Haiku (simple), Sonnet (moderate), Opus (complex)
+2. What calibre? → Light (simple), Medium (moderate), Heavy (complex)
 3. Delegate with clear task description + relevant file paths
 4. Stay available to the user
 
@@ -317,10 +317,10 @@ if [ ! -f "$WORKSPACE/MEMORY.md" ]; then
 ## 🔴 PRINCIPLES (always loaded, always followed)
 
 ### P1: Delegate First
-Assess every task for sub-agent delegation before starting. Stay available.
-- **Haiku:** File ops, searches, data extraction, simple scripts, monitoring
-- **Sonnet:** Multi-step work, code writing, debugging, research
-- **Opus:** Complex reasoning, architecture decisions, sensitive ops
+Assess every task for sub-agent delegation before starting. Stay available. Assign sub-agents by complexity using whatever models are configured:
+- **Light:** File ops, searches, data extraction, simple scripts, monitoring, lookups
+- **Medium:** Multi-step work, code writing, debugging, research, moderate complexity
+- **Heavy:** Complex reasoning, architecture decisions, sensitive or destructive operations
 - **Keep main thread for:** Conversation, decisions, confirmations, quick answers
 
 ### P2: Write It Down
@@ -402,10 +402,10 @@ elif ! grep -q "PRINCIPLES" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
 ## 🔴 PRINCIPLES (always loaded, always followed)
 
 ### P1: Delegate First
-Assess every task for sub-agent delegation before starting. Stay available.
-- **Haiku:** File ops, searches, data extraction, simple scripts, monitoring
-- **Sonnet:** Multi-step work, code writing, debugging, research
-- **Opus:** Complex reasoning, architecture decisions, sensitive ops
+Assess every task for sub-agent delegation before starting. Stay available. Assign sub-agents by complexity using whatever models are configured:
+- **Light:** File ops, searches, data extraction, simple scripts, monitoring, lookups
+- **Medium:** Multi-step work, code writing, debugging, research, moderate complexity
+- **Heavy:** Complex reasoning, architecture decisions, sensitive or destructive operations
 - **Keep main thread for:** Conversation, decisions, confirmations, quick answers
 
 ### P2: Write It Down
