@@ -66,7 +66,21 @@ clawhub install opencortex --force         # Download latest
 bash skills/opencortex/scripts/install.sh  # Detects existing install, offers Update
 ```
 
-The installer detects your existing version and offers: **1) Update** (recommended) — adds missing content, refreshes cron messages, offers new optional features. **2) Full reinstall.** **3) Cancel.** It never overwrites files you've customized.
+The installer detects your existing version and offers: **1) Update** (recommended), **2) Full reinstall**, **3) Cancel.** It never overwrites files you've customized.
+
+### What the updater does
+
+| Content | Update method | User data safe? |
+|---------|--------------|-----------------|
+| Principles (P1-P8) | Hash comparison, asks before replacing | ✅ Asks y/N per principle |
+| Helper scripts (verify, vault, metrics, git-backup) | Checksum comparison, auto-replaced | ✅ These aren't user-edited |
+| Reference docs (distillation, weekly-synthesis, architecture) | Checksum comparison, auto-replaced | ✅ These aren't user-edited |
+| Cron job messages | Always updated to latest template | ✅ Only the message text changes |
+| Cron model overrides | Cleared to gateway default | ✅ Fixes stale hardcoded models |
+| MEMORY.md index sections | Adds missing sections only | ✅ Existing sections untouched |
+| preferences.md | Created if missing | ✅ Existing file untouched |
+| New directories (contacts, workflows) | Created if missing | ✅ |
+| AGENTS.md, BOOTSTRAP.md, SOUL.md, USER.md | Never modified, warns if outdated | ✅ Never touched |
 
 ---
 
