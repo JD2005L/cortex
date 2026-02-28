@@ -75,14 +75,14 @@ if command -v openclaw &>/dev/null; then
   else
     check "Weekly Synthesis cron NOT found" "fail"
   fi
-  # Check for hardcoded model overrides (common misconfiguration)
+  # Check for problematic model overrides (models that don't exist)
   CRON_JSON=$(openclaw cron list --json 2>/dev/null || echo "")
   if [ -n "$CRON_JSON" ]; then
-    MODEL_OVERRIDES=$(echo "$CRON_JSON" | grep -o '"model":\s*"[^"]*"' | grep -v '"default"' || true)
-    if [ -n "$MODEL_OVERRIDES" ]; then
-      check "Cron jobs have hardcoded model overrides (should use gateway default) — run update.sh to fix" "warn"
+    BAD_MODELS=$(echo "$CRON_JSON" | grep -o '"model":\s*"[^"]*"' | grep -iE '"(anthropic/default|default)"' || true)
+    if [ -n "$BAD_MODELS" ]; then
+      check "Cron jobs have invalid model overrides (e.g. 'default' is not a real model)" "warn"
     else
-      check "No hardcoded model overrides in crons" "ok"
+      check "No invalid model overrides in crons" "ok"
     fi
   fi
 else

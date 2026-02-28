@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.5"
+OPENCORTEX_VERSION="3.5.6"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -126,8 +126,8 @@ if command -v openclaw &>/dev/null; then
       echo "   [DRY RUN] Would update 'Daily Memory Distillation' (id: $DAILY_ID) message"
       UPDATED=$((UPDATED + 1))
     else
-      openclaw cron edit "$DAILY_ID" --message "$DAILY_MSG" --model "" 2>/dev/null \
-        && echo "   ✅ Updated 'Daily Memory Distillation' cron (message + cleared model override)" \
+      openclaw cron edit "$DAILY_ID" --message "$DAILY_MSG" 2>/dev/null \
+        && echo "   ✅ Updated 'Daily Memory Distillation' cron message" \
         && UPDATED=$((UPDATED + 1)) \
         || echo "   ⚠️  Could not update 'Daily Memory Distillation' — run manually: openclaw cron edit $DAILY_ID --message '...'"
     fi
@@ -141,8 +141,8 @@ if command -v openclaw &>/dev/null; then
       echo "   [DRY RUN] Would update 'Weekly Synthesis' (id: $WEEKLY_ID) message"
       UPDATED=$((UPDATED + 1))
     else
-      openclaw cron edit "$WEEKLY_ID" --message "$WEEKLY_MSG" --model "" 2>/dev/null \
-        && echo "   ✅ Updated 'Weekly Synthesis' cron (message + cleared model override)" \
+      openclaw cron edit "$WEEKLY_ID" --message "$WEEKLY_MSG" 2>/dev/null \
+        && echo "   ✅ Updated 'Weekly Synthesis' cron message" \
         && UPDATED=$((UPDATED + 1)) \
         || echo "   ⚠️  Could not update 'Weekly Synthesis' — run manually: openclaw cron edit $WEEKLY_ID --message '...'"
     fi
