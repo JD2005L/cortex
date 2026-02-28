@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.18"
+OPENCORTEX_VERSION="3.5.0"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -88,8 +88,8 @@ if command -v openclaw &>/dev/null; then
       echo "   [DRY RUN] Would update 'Daily Memory Distillation' (id: $DAILY_ID) message"
       UPDATED=$((UPDATED + 1))
     else
-      openclaw cron edit "$DAILY_ID" --message "$DAILY_MSG" 2>/dev/null \
-        && echo "   ✅ Updated 'Daily Memory Distillation' cron message" \
+      openclaw cron edit "$DAILY_ID" --message "$DAILY_MSG" --model "" 2>/dev/null \
+        && echo "   ✅ Updated 'Daily Memory Distillation' cron (message + cleared model override)" \
         && UPDATED=$((UPDATED + 1)) \
         || echo "   ⚠️  Could not update 'Daily Memory Distillation' — run manually: openclaw cron edit $DAILY_ID --message '...'"
     fi
@@ -103,8 +103,8 @@ if command -v openclaw &>/dev/null; then
       echo "   [DRY RUN] Would update 'Weekly Synthesis' (id: $WEEKLY_ID) message"
       UPDATED=$((UPDATED + 1))
     else
-      openclaw cron edit "$WEEKLY_ID" --message "$WEEKLY_MSG" 2>/dev/null \
-        && echo "   ✅ Updated 'Weekly Synthesis' cron message" \
+      openclaw cron edit "$WEEKLY_ID" --message "$WEEKLY_MSG" --model "" 2>/dev/null \
+        && echo "   ✅ Updated 'Weekly Synthesis' cron (message + cleared model override)" \
         && UPDATED=$((UPDATED + 1)) \
         || echo "   ⚠️  Could not update 'Weekly Synthesis' — run manually: openclaw cron edit $WEEKLY_ID --message '...'"
     fi
@@ -372,6 +372,173 @@ EOPR
         UPDATED=$((UPDATED + 1))
       done
     fi
+  fi
+fi
+
+# Clean up extra/duplicate principles beyond P0-P8
+if [ -f "$WORKSPACE/MEMORY.md" ]; then
+  echo ""
+  echo "🧹 Checking for extra principles..."
+  EXTRA_PRINCIPLES=$(grep "^### P[0-9]" "$WORKSPACE/MEMORY.md" | grep -v "^### P0:\|^### P1:\|^### P2:\|^### P3:\|^### P4:\|^### P5:\|^### P6:\|^### P7:\|^### P8:" || true)
+
+  if [ -n "$EXTRA_PRINCIPLES" ]; then
+    echo "   Found principles outside P0-P8 range:"
+    echo "$EXTRA_PRINCIPLES" | sed 's/^/      /'
+    echo ""
+
+    while IFS= read -r extra_line; do
+      [ -z "$extra_line" ] && continue
+      extra_pnum=$(echo "$extra_line" | sed 's/^### \(P[0-9]*\):.*/\1/')
+      extra_title="$extra_line"
+
+      # Extract the full body of this extra principle
+      extra_body=$(awk "/^### ${extra_pnum}:/{found=1} found{if(/^### P[0-9]/ && !/^### ${extra_pnum}:/)exit; if(/^---$/)exit; if(/^## /)exit; print}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
+
+      # Check if this is a duplicate of an existing P1-P8
+      is_duplicate=false
+      for std_pnum in P1 P2 P3 P4 P5 P6 P7 P8; do
+        std_title=$(grep "^### ${std_pnum}:" "$WORKSPACE/MEMORY.md" 2>/dev/null | head -1)
+        if [ -n "$std_title" ]; then
+          # Compare titles (strip the Px: prefix)
+          extra_name=$(echo "$extra_title" | sed 's/^### P[0-9]*: //')
+          std_name=$(echo "$std_title" | sed 's/^### P[0-9]*: //')
+          if [ "$extra_name" = "$std_name" ]; then
+            is_duplicate=true
+            echo "   🔄 $extra_pnum is a duplicate of $std_pnum ($std_name)"
+            break
+          fi
+        fi
+      done
+
+      if [ "$is_duplicate" = true ]; then
+        echo "   Options: (r)emove duplicate, (k)eep as-is"
+        if ask_yn "   Remove duplicate $extra_pnum? (Y/n): " y; then
+          if [ "$DRY_RUN" != "true" ]; then
+            start_line=$(grep -n "^### ${extra_pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+            next_line=$(tail -n "+$((start_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### \|^## " | head -1 | cut -d: -f1)
+            if [ -n "$next_line" ]; then
+              end_line=$((start_line + next_line - 1))
+            else
+              end_line=$(wc -l < "$WORKSPACE/MEMORY.md")
+            fi
+            tmp_mem=$(mktemp)
+            head -n "$((start_line - 1))" "$WORKSPACE/MEMORY.md" > "$tmp_mem"
+            tail -n "+$((end_line + 1))" "$WORKSPACE/MEMORY.md" >> "$tmp_mem"
+            mv "$tmp_mem" "$WORKSPACE/MEMORY.md"
+            echo "   ✅ Removed duplicate $extra_pnum"
+            UPDATED=$((UPDATED + 1))
+          fi
+        fi
+      else
+        echo "   📋 $extra_pnum has unique content:"
+        echo "$extra_body" | head -5 | sed 's/^/      /'
+        echo ""
+        echo "   Options: (m)ove to P0 sub-principle, (r)emove, (k)eep as-is"
+        while true; do
+          read -p "   Action for $extra_pnum? (m/r/k): " ACTION
+          ACTION=$(echo "$ACTION" | tr '[:upper:]' '[:lower:]')
+          case "$ACTION" in
+            m)
+              if [ "$DRY_RUN" != "true" ]; then
+                # Count existing P0 sub-principles
+                existing_count=$(grep -c "^#### P0-" "$WORKSPACE/MEMORY.md" 2>/dev/null || true)
+                existing_count=$(printf '%s' "$existing_count" | tr -dc '0-9')
+                existing_count=${existing_count:-0}
+                next_letter=$(printf "\\$(printf '%03o' $((65 + existing_count)))")
+
+                # Add to P0
+                p0_line=$(grep -n "^### P0:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+                p0_end=$(tail -n "+$((p0_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### P[0-9]" | head -1 | cut -d: -f1)
+                if [ -n "$p0_end" ]; then
+                  insert_at=$((p0_line + p0_end - 1))
+                else
+                  insert_at=$((p0_line + 1))
+                fi
+                # Build sub-principle from body (skip the original ### header)
+                sub_body=$(echo "$extra_body" | tail -n +2)
+                sub_name=$(echo "$extra_title" | sed 's/^### P[0-9]*: //')
+                sub_text="\n#### P0-${next_letter}: ${sub_name}\n${sub_body}\n"
+                sed -i "${insert_at}a\\${sub_text}" "$WORKSPACE/MEMORY.md"
+
+                # Remove the original
+                start_line=$(grep -n "^### ${extra_pnum}:" "$WORKSPACE/MEMORY.md" | tail -1 | cut -d: -f1)
+                next_line=$(tail -n "+$((start_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### \|^## " | head -1 | cut -d: -f1)
+                if [ -n "$next_line" ]; then
+                  end_line=$((start_line + next_line - 1))
+                else
+                  end_line=$(wc -l < "$WORKSPACE/MEMORY.md")
+                fi
+                tmp_mem=$(mktemp)
+                head -n "$((start_line - 1))" "$WORKSPACE/MEMORY.md" > "$tmp_mem"
+                tail -n "+$((end_line + 1))" "$WORKSPACE/MEMORY.md" >> "$tmp_mem"
+                mv "$tmp_mem" "$WORKSPACE/MEMORY.md"
+                echo "   ✅ Moved to P0-${next_letter}, removed $extra_pnum"
+                UPDATED=$((UPDATED + 1))
+              fi
+              break ;;
+            r)
+              if [ "$DRY_RUN" != "true" ]; then
+                start_line=$(grep -n "^### ${extra_pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+                next_line=$(tail -n "+$((start_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### \|^## " | head -1 | cut -d: -f1)
+                if [ -n "$next_line" ]; then
+                  end_line=$((start_line + next_line - 1))
+                else
+                  end_line=$(wc -l < "$WORKSPACE/MEMORY.md")
+                fi
+                tmp_mem=$(mktemp)
+                head -n "$((start_line - 1))" "$WORKSPACE/MEMORY.md" > "$tmp_mem"
+                tail -n "+$((end_line + 1))" "$WORKSPACE/MEMORY.md" >> "$tmp_mem"
+                mv "$tmp_mem" "$WORKSPACE/MEMORY.md"
+                echo "   ✅ Removed $extra_pnum"
+                UPDATED=$((UPDATED + 1))
+              fi
+              break ;;
+            k)
+              echo "   ⏭️  Kept $extra_pnum"
+              SKIPPED=$((SKIPPED + 1))
+              break ;;
+            *) echo "   Please enter m, r, or k." ;;
+          esac
+        done
+      fi
+    done <<< "$EXTRA_PRINCIPLES"
+  else
+    echo "   ⏭️  No extra principles found (P0-P8 only)"
+    SKIPPED=$((SKIPPED + 1))
+  fi
+fi
+
+# Check for non-standard ## sections in MEMORY.md that should be moved
+if [ -f "$WORKSPACE/MEMORY.md" ]; then
+  echo ""
+  echo "🧹 Checking MEMORY.md structure..."
+  STANDARD_MEM_SECTIONS="PRINCIPLES|Identity|Memory Index"
+  NON_STANDARD=""
+  while IFS= read -r section_line; do
+    section_name=$(echo "$section_line" | sed 's/^## //')
+    if ! echo "$section_name" | grep -qE "($STANDARD_MEM_SECTIONS)"; then
+      NON_STANDARD="${NON_STANDARD}${section_line}\n"
+    fi
+  done < <(grep "^## " "$WORKSPACE/MEMORY.md" | grep -v "^## 🔴")
+
+  if [ -n "$NON_STANDARD" ]; then
+    echo "   ⚠️  Found non-standard ## sections in MEMORY.md:"
+    printf "   %b" "$NON_STANDARD" | sed 's/^/      /'
+    echo "   MEMORY.md should only contain: 🔴 PRINCIPLES, ## Identity, ## Memory Index"
+    echo "   Non-standard sections should be moved to dedicated memory files."
+    echo "   (The weekly synthesis will handle this automatically on next run.)"
+  else
+    echo "   ⏭️  MEMORY.md structure is clean"
+    SKIPPED=$((SKIPPED + 1))
+  fi
+
+  # Size check
+  MEM_SIZE=$(du -k "$WORKSPACE/MEMORY.md" 2>/dev/null | cut -f1)
+  if [ "$MEM_SIZE" -gt 10 ]; then
+    echo "   ⚠️  MEMORY.md is ${MEM_SIZE}KB — target is < 5KB. Large MEMORY.md slows every session boot."
+    echo "   Move verbose content (project details, job tables, lessons) to memory/projects/ or other files."
+  elif [ "$MEM_SIZE" -gt 5 ]; then
+    echo "   ℹ️  MEMORY.md is ${MEM_SIZE}KB — consider trimming (target: < 5KB)"
   fi
 fi
 echo ""

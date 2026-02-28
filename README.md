@@ -77,8 +77,10 @@ The installer detects your existing version and offers: **1) Update** (recommend
 | Helper scripts (verify, vault, metrics, git-backup) | Checksum comparison, auto-replaced | ✅ These aren't user-edited |
 | Reference docs (distillation, weekly-synthesis, architecture) | Checksum comparison, auto-replaced | ✅ These aren't user-edited |
 | Cron job messages | Always updated to latest template | ✅ Only the message text changes |
-| Cron model overrides | Removed (gateway uses configured default) | ✅ |
+| Cron model overrides | Cleared on every update | ✅ Gateway uses its configured default |
 | Cron deduplication | Detects and removes duplicate crons from prior bugs | ✅ Keeps the first, deletes extras |
+| Extra principles (P9+) | Detects duplicates and orphans, offers remove/migrate to P0 | ✅ Asks per principle |
+| MEMORY.md bloat | Warns if >5KB, flags non-standard sections | ✅ Suggests what to move |
 | Missing cron jobs | Offers to recreate with timezone auto-detection | ✅ Asks before creating |
 | MEMORY.md structure (## Identity, ## Memory Index) | Adds missing core sections | ✅ Existing sections untouched |
 | MEMORY.md index (### Infrastructure through ### Daily Logs) | Adds all 8 missing sub-sections | ✅ Existing sections untouched |
