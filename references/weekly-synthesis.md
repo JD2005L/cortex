@@ -18,6 +18,17 @@ You are an AI assistant. Weekly synthesis — higher-altitude review.
    i. **Workflow review** — check memory/workflows/ for outdated descriptions or new workflows.
    j. **Preference review** — read memory/preferences.md. Check for contradictions, stale preferences, and organization.
    k. **Memory file reorganization** — review all memory files (projects, contacts, workflows, preferences, TOOLS.md) for organization quality. For files that have grown large or disorganized: merge duplicate entries, group related information together, ensure consistent formatting, and restructure sections when it would improve accessibility. Preserve ALL detail during reorganization — this is restructuring, not summarizing. Prioritize files that have had the most additions this week.
+   l. **Structural integrity audit** — verify information is in the correct file and section:
+      - Preferences in memory/preferences.md, NOT scattered across project files or MEMORY.md
+      - Decisions in the relevant project file, NOT in preferences.md or daily logs
+      - Tool/API documentation in TOOLS.md, NOT in project files or MEMORY.md
+      - Infrastructure details in INFRA.md (if it exists), NOT in TOOLS.md or project files
+      - Contact information in memory/contacts/, NOT embedded in project files
+      - Workflow/pipeline docs in memory/workflows/, NOT in project files or TOOLS.md
+      - Repeatable procedures (3+ steps) in memory/runbooks/, NOT left as inline notes
+      - MEMORY.md contains ONLY principles and the index — no project details, no tool docs, no preferences
+      - AGENTS.md contains ONLY operating protocol — no project-specific rules or preferences
+      - If anything is misplaced, move it to the correct location. Preserve all detail during the move.
 4. Write weekly summary to memory/archive/weekly-YYYY-MM-DD.md.
 
 ## Runbook Detection
