@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.0"
+OPENCORTEX_VERSION="3.4.1"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -201,7 +201,7 @@ EOPR
       else
         # Title matches — check if body content has changed
         # Extract current principle block including header (from ### Px: to line before next ### P or ---)
-        current_body=$(awk "/^### ${pnum}:/{found=1} found{if(/^### P[0-9]/ && !/^### ${pnum}:/)exit; if(/^---$/)exit; print}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
+        current_body=$(awk "/^### ${pnum}:/{found=1} found{if(/^### P[0-9]/ && !/^### ${pnum}:/)exit; if(/^---$/)exit; if(/^## /)exit; print}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
         expected_body="${PRINCIPLE_TEXTS[$pnum]}"
         current_hash=$(printf '%s' "$current_body" | tr -d '[:space:]' | md5sum | cut -d' ' -f1)
         expected_hash=$(printf '%s' "$expected_body" | tr -d '[:space:]' | md5sum | cut -d' ' -f1)
@@ -230,7 +230,7 @@ EOPR
         expected_title=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | head -1)
         echo ""
         # Extract current principle block for display (including header)
-        current_full=$(awk "/^### ${pnum}:/{found=1} found{if(/^### P[0-9]/ && !/^### ${pnum}:/)exit; if(/^---$/)exit; print}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
+        current_full=$(awk "/^### ${pnum}:/{found=1} found{if(/^### P[0-9]/ && !/^### ${pnum}:/)exit; if(/^---$/)exit; if(/^## /)exit; print}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
         expected_full="${PRINCIPLE_TEXTS[$pnum]}"
 
         if [ "$current_title" != "$expected_title" ]; then
