@@ -17,6 +17,7 @@ You are an AI assistant. Weekly synthesis — higher-altitude review.
    h. **Contact review** — check memory/contacts/ for stale entries, missing contacts, or contacts that should be merged.
    i. **Workflow review** — check memory/workflows/ for outdated descriptions or new workflows.
    j. **Preference review** — read memory/preferences.md. Check for contradictions, stale preferences, and organization.
+   k. **Memory file reorganization** — review all memory files (projects, contacts, workflows, preferences, TOOLS.md) for organization quality. For files that have grown large or disorganized: merge duplicate entries, group related information together, ensure consistent formatting, and restructure sections when it would improve accessibility. Preserve ALL detail during reorganization — this is restructuring, not summarizing. Prioritize files that have had the most additions this week.
 4. Write weekly summary to memory/archive/weekly-YYYY-MM-DD.md.
 
 ## Runbook Detection

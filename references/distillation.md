@@ -42,6 +42,11 @@ ONLY perform this section if OPENCORTEX_VOICE_PROFILE=1 is set in the environmen
 - Review MEMORY.md: verify index accuracy, principles concise, jobs table current.
 - Review TOOLS.md and (if OPENCORTEX_INFRA_COLLECT=1) INFRA.md: remove stale entries, verify descriptions.
 
+## Stale Content Cleanup
+
+- Check memory/projects/ for projects marked "Complete" more than 30 days ago with no recent daily log mentions. Flag for archival in the summary (do not delete — the user decides).
+- Check MEMORY.md scheduled jobs table against actual cron jobs (openclaw cron list + crontab -l). Remove entries for crons that no longer exist. Add entries for crons not yet documented.
+
 ## Tool Shed Audit (P4 Enforcement)
 
 - Read TOOLS.md. Scan today's daily logs for any CLI tools, APIs, or services that were USED but are NOT documented in TOOLS.md. Add missing entries with: what it is, how to access it, what it can do.

@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.5"
+OPENCORTEX_VERSION="3.4.6"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -109,7 +109,27 @@ if [ "$DRY_RUN" = "true" ]; then
 fi
 
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
-TZ="${CLAWD_TZ:-UTC}"
+
+# Detect timezone: env var → system → ask user
+if [ -n "${CLAWD_TZ:-}" ]; then
+  TZ="$CLAWD_TZ"
+elif [ -f /etc/timezone ]; then
+  TZ=$(cat /etc/timezone 2>/dev/null | tr -d '[:space:]')
+elif [ -L /etc/localtime ]; then
+  TZ=$(readlink -f /etc/localtime 2>/dev/null | sed 's|.*/zoneinfo/||')
+fi
+TZ="${TZ:-UTC}"
+
+if [ "$TZ" = "UTC" ] || [ "$TZ" = "Etc/UTC" ]; then
+  echo "⏰ Could not detect your local timezone."
+  echo "   Cron jobs need your timezone to run at the right local time."
+  echo "   Examples: America/New_York, America/Edmonton, Europe/London, Asia/Tokyo"
+  read -p "   Enter your timezone (or press Enter for UTC): " USER_TZ
+  USER_TZ=$(echo "$USER_TZ" | tr -d '[:space:]')
+  if [ -n "$USER_TZ" ]; then
+    TZ="$USER_TZ"
+  fi
+fi
 
 echo "🧠 OpenCortex — Installing self-improving memory architecture"
 echo "   Workspace: $WORKSPACE"
