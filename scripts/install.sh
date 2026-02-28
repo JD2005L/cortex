@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.2"
+OPENCORTEX_VERSION="3.5.3"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -132,7 +132,7 @@ ask_yn() {
   fi
 
   while true; do
-    read -p "$prompt" answer
+    read -p "$prompt" answer < /dev/tty
     answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
     case "$answer" in
       y|yes) return 0 ;;

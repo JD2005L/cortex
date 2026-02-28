@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.2"
+OPENCORTEX_VERSION="3.5.3"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -47,7 +47,7 @@ ask_yn() {
   fi
 
   while true; do
-    read -p "$prompt" answer
+    read -p "$prompt" answer < /dev/tty
     answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
     case "$answer" in
       y|yes) return 0 ;;
@@ -72,7 +72,7 @@ ask_mrk() {
     return
   fi
   while true; do
-    read -p "$prompt" answer
+    read -p "$prompt" answer < /dev/tty
     answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
     case "$answer" in
       m|r|k) echo "$answer"; return ;;
