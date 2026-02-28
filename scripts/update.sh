@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.6"
+OPENCORTEX_VERSION="3.4.7"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -705,6 +705,12 @@ if [ -f "$WORKSPACE/AGENTS.md" ]; then
   if ! grep -q "Custom Principles\|P0" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
     AGENTS_WARNINGS+=("Custom Principles (P0) guidance")
   fi
+  if ! grep -q "## Safety" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
+    AGENTS_WARNINGS+=("Safety boundaries")
+  fi
+  if ! grep -q "## Formatting" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
+    AGENTS_WARNINGS+=("Formatting guidance")
+  fi
   if [ ${#AGENTS_WARNINGS[@]} -gt 0 ]; then
     echo "   ⚠️  AGENTS.md is missing: ${AGENTS_WARNINGS[*]}"
     read -p "   Back up current and regenerate AGENTS.md? (y/N): " REGEN_AGENTS
@@ -780,6 +786,17 @@ When the user asks about OpenCortex metrics, how it is doing, or wants to see gr
 1. Run: bash scripts/metrics.sh --report
 2. Share the trends, compound score, and any areas that need attention.
 3. If no data exists yet, run: bash scripts/metrics.sh --collect first.
+
+## Safety
+- Never exfiltrate private data
+- Ask before external actions (P3)
+- Private context stays out of group chats
+- When in doubt, ask — do not assume permission
+
+## Formatting
+- Keep replies concise for chat surfaces (Telegram, Discord, etc.)
+- Avoid markdown tables on surfaces that do not render them well
+- Match the communication style documented in USER.md
 
 ## Updates
 When the user asks to update OpenCortex or check for updates:

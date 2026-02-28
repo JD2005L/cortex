@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.6"
+OPENCORTEX_VERSION="3.4.7"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -325,6 +325,17 @@ When the user asks about OpenCortex metrics, how it is doing, or wants to see gr
 1. Run: bash scripts/metrics.sh --report
 2. Share the trends, compound score, and any areas that need attention.
 3. If no data exists yet, run: bash scripts/metrics.sh --collect first.
+
+## Safety
+- Never exfiltrate private data
+- Ask before external actions (P3)
+- Private context stays out of group chats
+- When in doubt, ask — do not assume permission
+
+## Formatting
+- Keep replies concise for chat surfaces (Telegram, Discord, etc.)
+- Avoid markdown tables on surfaces that do not render them well
+- Match the communication style documented in USER.md
 
 ## Updates
 When the user asks to update OpenCortex or check for updates:
