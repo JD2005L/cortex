@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.9"
+OPENCORTEX_VERSION="3.4.10"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -938,14 +938,55 @@ if command -v openclaw >/dev/null 2>&1; then
     SKIPPED=$((SKIPPED + 1))
   else
     echo "   ⚠️  Daily Memory Distillation cron not found"
-    echo "      Run install.sh to create it, or manually add with: openclaw cron add"
+    read -p "   Create it now? (Y/n): " CREATE_DAILY
+    CREATE_DAILY=$(echo "$CREATE_DAILY" | tr '[:upper:]' '[:lower:]')
+    if [ "$CREATE_DAILY" != "n" ] && [ "$CREATE_DAILY" != "no" ]; then
+      # Detect timezone
+      CRON_TZ="${CLAWD_TZ:-}"
+      if [ -z "$CRON_TZ" ] && [ -f /etc/timezone ]; then
+        CRON_TZ=$(cat /etc/timezone 2>/dev/null | tr -d '[:space:]')
+      elif [ -z "$CRON_TZ" ] && [ -L /etc/localtime ]; then
+        CRON_TZ=$(readlink -f /etc/localtime 2>/dev/null | sed 's|.*/zoneinfo/||')
+      fi
+      CRON_TZ="${CRON_TZ:-UTC}"
+      if [ "$DRY_RUN" != "true" ]; then
+        openclaw cron add \
+          --name "Daily Memory Distillation" \
+          --cron "0 3 * * *" \
+          --tz "$CRON_TZ" \
+          --session "isolated" \
+          --timeout-seconds 180 \
+          --no-deliver \
+          --message "$DAILY_MSG" 2>/dev/null && \
+        echo "   ✅ Created Daily Memory Distillation cron (3 AM $CRON_TZ)" || \
+        echo "   ❌ Failed to create cron — try: openclaw cron add --name 'Daily Memory Distillation' --cron '0 3 * * *'"
+        UPDATED=$((UPDATED + 1))
+      fi
+    fi
   fi
   if echo "$CRON_LIST" | grep -qi "Weekly Synthesis"; then
     echo "   ⏭️  Weekly Synthesis cron exists"
     SKIPPED=$((SKIPPED + 1))
   else
     echo "   ⚠️  Weekly Synthesis cron not found"
-    echo "      Run install.sh to create it, or manually add with: openclaw cron add"
+    read -p "   Create it now? (Y/n): " CREATE_WEEKLY
+    CREATE_WEEKLY=$(echo "$CREATE_WEEKLY" | tr '[:upper:]' '[:lower:]')
+    if [ "$CREATE_WEEKLY" != "n" ] && [ "$CREATE_WEEKLY" != "no" ]; then
+      CRON_TZ="${CRON_TZ:-${CLAWD_TZ:-UTC}}"
+      if [ "$DRY_RUN" != "true" ]; then
+        openclaw cron add \
+          --name "Weekly Synthesis" \
+          --cron "0 5 * * 0" \
+          --tz "$CRON_TZ" \
+          --session "isolated" \
+          --timeout-seconds 180 \
+          --no-deliver \
+          --message "$WEEKLY_MSG" 2>/dev/null && \
+        echo "   ✅ Created Weekly Synthesis cron (Sunday 5 AM $CRON_TZ)" || \
+        echo "   ❌ Failed to create cron — try: openclaw cron add --name 'Weekly Synthesis' --cron '0 5 * * 0'"
+        UPDATED=$((UPDATED + 1))
+      fi
+    fi
   fi
 else
   echo "   ⏭️  openclaw not in PATH — skipping cron existence check"
