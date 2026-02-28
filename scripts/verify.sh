@@ -145,7 +145,7 @@ if command -v openclaw >/dev/null 2>&1; then
     DB_SIZE=$(du -k "$MEM_DB" 2>/dev/null | cut -f1)
     check "Memory search index exists (${DB_SIZE}KB)" "ok"
   else
-    check "No memory search index found — embeddings may not be configured" "warn"
+    check "No memory search index (optional — see docs.openclaw.ai/concepts/memory)" "ok"
   fi
 
   # Check if memory files are being indexed (non-empty memory dir)

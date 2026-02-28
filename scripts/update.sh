@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.13"
+OPENCORTEX_VERSION="3.5.14"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -1446,14 +1446,9 @@ if [ -n "$MEM_DB" ]; then
   echo "   ✅ Memory search index found (${DB_SIZE}KB)"
   SKIPPED=$((SKIPPED + 1))
 else
-  echo "   ⚠️  No memory search index found."
-  echo "   Memory search needs an embedding provider. OpenClaw auto-detects from API keys:"
-  echo "     • OpenAI:  set OPENAI_API_KEY or models.providers.openai.apiKey"
-  echo "     • Gemini:  set GEMINI_API_KEY or models.providers.google.apiKey"
-  echo "     • Voyage:  set VOYAGE_API_KEY or models.providers.voyage.apiKey"
-  echo "     • Mistral: set MISTRAL_API_KEY or models.providers.mistral.apiKey"
-  echo "     • Local:   set agents.defaults.memorySearch.local.modelPath to a GGUF file"
-  echo "   Once configured, restart the gateway: openclaw gateway restart"
+  echo "   ℹ️  No memory search index found (optional)."
+  echo "   OpenCortex works fine without it — memory files are still searchable by the agent."
+  echo "   For improved semantic search, configure an embedding provider in OpenClaw:"
   echo "   Docs: https://docs.openclaw.ai/concepts/memory"
 fi
 echo ""
