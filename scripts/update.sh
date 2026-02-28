@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.7"
+OPENCORTEX_VERSION="3.4.8"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -717,8 +717,35 @@ if [ -f "$WORKSPACE/AGENTS.md" ]; then
     REGEN_AGENTS=$(echo "$REGEN_AGENTS" | tr '[:upper:]' '[:lower:]')
     if [ "$REGEN_AGENTS" = "y" ] || [ "$REGEN_AGENTS" = "yes" ]; then
       if [ "$DRY_RUN" != "true" ]; then
-        cp "$WORKSPACE/AGENTS.md" "$WORKSPACE/AGENTS.md.bak.$(date +%Y%m%d%H%M%S)"
-        echo "   📦 Backed up to AGENTS.md.bak.*"
+        # Extract custom sections from existing AGENTS.md before regenerating
+        # Standard sections that the template provides:
+        STANDARD_SECTIONS="Boot Sequence|Principles|Delegation|Custom Principles|Write Before Responding|Memory Structure|Health Check|Metrics|Updates|Safety|Formatting"
+        CUSTOM_SECTIONS=""
+        if [ -f "$WORKSPACE/AGENTS.md" ]; then
+          # Extract any ## sections whose title doesn't match a standard section
+          current_section=""
+          current_content=""
+          while IFS= read -r line; do
+            if echo "$line" | grep -q "^## "; then
+              # Save previous non-standard section
+              if [ -n "$current_section" ] && ! echo "$current_section" | grep -qE "($STANDARD_SECTIONS)"; then
+                CUSTOM_SECTIONS="${CUSTOM_SECTIONS}${current_content}"$'\n'
+              fi
+              current_section=$(echo "$line" | sed 's/^## //')
+              current_content="$line"$'\n'
+            elif [ -n "$current_section" ]; then
+              current_content="${current_content}${line}"$'\n'
+            fi
+          done < "$WORKSPACE/AGENTS.md"
+          # Capture last section
+          if [ -n "$current_section" ] && ! echo "$current_section" | grep -qE "($STANDARD_SECTIONS)"; then
+            CUSTOM_SECTIONS="${CUSTOM_SECTIONS}${current_content}"$'\n'
+          fi
+        fi
+
+        if [ -n "$CUSTOM_SECTIONS" ]; then
+          echo "   📋 Preserving custom sections from existing AGENTS.md"
+        fi
 
         # Determine boot sequence
         AGENTS_BOOT="## Boot Sequence"$'\n'"1. Read SOUL.md"$'\n'"2. Read MEMORY.md — principles + memory index"$'\n'"3. Use memory_search for anything deeper"
@@ -805,7 +832,15 @@ When the user asks to update OpenCortex or check for updates:
 3. Run: bash skills/opencortex/scripts/verify.sh
 Share the results with the user.
 AGENTSEOF
-        echo "   ✅ Regenerated AGENTS.md"
+
+        # Append any custom sections that were in the old file
+        if [ -n "$CUSTOM_SECTIONS" ]; then
+          echo "" >> "$WORKSPACE/AGENTS.md"
+          printf '%s' "$CUSTOM_SECTIONS" >> "$WORKSPACE/AGENTS.md"
+          echo "   ✅ Regenerated AGENTS.md (custom sections preserved)"
+        else
+          echo "   ✅ Regenerated AGENTS.md"
+        fi
         UPDATED=$((UPDATED + 1))
       fi
     else
@@ -834,8 +869,27 @@ if [ -f "$WORKSPACE/BOOTSTRAP.md" ]; then
     REGEN_BOOT=$(echo "$REGEN_BOOT" | tr '[:upper:]' '[:lower:]')
     if [ "$REGEN_BOOT" = "y" ] || [ "$REGEN_BOOT" = "yes" ]; then
       if [ "$DRY_RUN" != "true" ]; then
-        cp "$WORKSPACE/BOOTSTRAP.md" "$WORKSPACE/BOOTSTRAP.md.bak.$(date +%Y%m%d%H%M%S)"
-        echo "   📦 Backed up to BOOTSTRAP.md.bak.*"
+        # Extract custom sections from existing BOOTSTRAP.md
+        BOOT_STANDARD="First-Run Checklist|Silent Replies|Sub-Agent Protocol"
+        BOOT_CUSTOM=""
+        if [ -f "$WORKSPACE/BOOTSTRAP.md" ]; then
+          current_section=""
+          current_content=""
+          while IFS= read -r line; do
+            if echo "$line" | grep -q "^## "; then
+              if [ -n "$current_section" ] && ! echo "$current_section" | grep -qE "($BOOT_STANDARD)"; then
+                BOOT_CUSTOM="${BOOT_CUSTOM}${current_content}"$'\n'
+              fi
+              current_section=$(echo "$line" | sed 's/^## //')
+              current_content="$line"$'\n'
+            elif [ -n "$current_section" ]; then
+              current_content="${current_content}${line}"$'\n'
+            fi
+          done < "$WORKSPACE/BOOTSTRAP.md"
+          if [ -n "$current_section" ] && ! echo "$current_section" | grep -qE "($BOOT_STANDARD)"; then
+            BOOT_CUSTOM="${BOOT_CUSTOM}${current_content}"$'\n'
+          fi
+        fi
         cat > "$WORKSPACE/BOOTSTRAP.md" << 'BOOTEOF'
 # BOOTSTRAP.md — First-Run Checklist
 
@@ -852,7 +906,13 @@ On new session start:
 When delegating, always include in task message:
 "Before completing, append a brief debrief to memory/YYYY-MM-DD.md (today's date): what you did, what you learned, any issues."
 BOOTEOF
-        echo "   ✅ Regenerated BOOTSTRAP.md"
+        if [ -n "$BOOT_CUSTOM" ]; then
+          echo "" >> "$WORKSPACE/BOOTSTRAP.md"
+          printf '%s' "$BOOT_CUSTOM" >> "$WORKSPACE/BOOTSTRAP.md"
+          echo "   ✅ Regenerated BOOTSTRAP.md (custom sections preserved)"
+        else
+          echo "   ✅ Regenerated BOOTSTRAP.md"
+        fi
         UPDATED=$((UPDATED + 1))
       fi
     else
