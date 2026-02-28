@@ -18,6 +18,7 @@ OpenCortex transforms your agent into one that **gets smarter every day** throug
 - **Nightly distillation** — Daily work automatically distilled into permanent knowledge
 - **Weekly synthesis** — Pattern detection across days catches recurring problems and unfinished threads
 - **Enforced principles** — Habits that prevent knowledge loss (decision capture, tool documentation, sub-agent debriefs)
+- **Write-ahead durability** — Agent writes decisions and preferences to memory before responding, so nothing is lost if the session ends or compacts mid-conversation
 - **Encrypted vault** — AES-256 encrypted secret storage with system keyring support
 - **Voice profiling** *(opt-in)* — Learns how your human communicates for authentic ghostwriting
 - **Infrastructure collection** *(opt-in)* — Auto-routes infrastructure details from daily logs to INFRA.md

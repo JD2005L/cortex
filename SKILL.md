@@ -3,7 +3,7 @@ name: OpenCortex
 homepage: https://github.com/JD2005L/opencortex
 description: >
   Self-improving memory architecture for OpenClaw agents. Structured memory files,
-  nightly distillation, weekly synthesis, and enforced principles — so your agent
+  nightly distillation, weekly synthesis, enforced principles, and write-ahead durability — so your agent
   compounds knowledge instead of forgetting it. Includes opt-in metrics tracking with
   growth charts and compound scoring to measure effectiveness over time. All sensitive features (voice profiling,
   infrastructure auto-collection, git push) are OFF by default and require explicit
