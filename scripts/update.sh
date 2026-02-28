@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.0"
+OPENCORTEX_VERSION="3.5.1"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -411,8 +411,7 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
       done
 
       if [ "$is_duplicate" = true ]; then
-        echo "   Options: (r)emove duplicate, (k)eep as-is"
-        if ask_yn "   Remove duplicate $extra_pnum? (Y/n): " y; then
+        if ask_yn "   Remove duplicate $extra_pnum? (y/N): " n; then
           if [ "$DRY_RUN" != "true" ]; then
             start_line=$(grep -n "^### ${extra_pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
             next_line=$(tail -n "+$((start_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### \|^## " | head -1 | cut -d: -f1)
@@ -433,7 +432,10 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
         echo "   📋 $extra_pnum has unique content:"
         echo "$extra_body" | head -5 | sed 's/^/      /'
         echo ""
-        echo "   Options: (m)ove to P0 sub-principle, (r)emove, (k)eep as-is"
+        echo "   What should we do with $extra_pnum?"
+        echo "     m = Move to P0 as custom sub-principle"
+        echo "     r = Remove entirely"
+        echo "     k = Keep as-is (no change)"
         while true; do
           read -p "   Action for $extra_pnum? (m/r/k): " ACTION
           ACTION=$(echo "$ACTION" | tr '[:upper:]' '[:lower:]')
