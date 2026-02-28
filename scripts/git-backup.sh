@@ -61,21 +61,11 @@ if [ -f "$SECRETS_FILE" ]; then
     secret="$(printf '%s' "$secret" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
     [ -z "$secret" ] && continue
 
-    if [ "${OPENCORTEX_SCRUB_ALL:-0}" = "1" ]; then
-      # Scrub all non-binary tracked files
-      while IFS= read -r -d '' f; do
-        file -b --mime-encoding "$f" 2>/dev/null | grep -q "binary" && continue
-        grep -qF "$secret" "$f" 2>/dev/null && sed -i "s|$secret|$placeholder|g" "$f"
-      done < <(find "$SCRUB_DIR" -type f -print0)
-    else
-      # Scrub known text file types only (default)
-      while IFS= read -r -d '' f; do
-        grep -qF "$secret" "$f" 2>/dev/null && sed -i "s|$secret|$placeholder|g" "$f"
-      done < <(find "$SCRUB_DIR" -type f \( \
-        -name "*.md" -o -name "*.sh" -o -name "*.json" -o -name "*.conf" \
-        -o -name "*.py" -o -name "*.yaml" -o -name "*.yml" -o -name "*.toml" \
-        -o -name "*.env" -o -name "*.txt" -o -name "*.cfg" \) -print0)
-    fi
+    # Scrub all non-binary tracked files (matches verification scope)
+    while IFS= read -r -d '' f; do
+      file -b --mime-encoding "$f" 2>/dev/null | grep -q "binary" && continue
+      grep -qF "$secret" "$f" 2>/dev/null && sed -i "s|$secret|$placeholder|g" "$f"
+    done < <(find "$SCRUB_DIR" -type f -print0)
   done < "$SECRETS_FILE"
 
   # Step 3: Verify no secrets remain in the scrubbed copy
