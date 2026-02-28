@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.10"
+OPENCORTEX_VERSION="3.4.11"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -261,7 +261,7 @@ EOPR
           echo ""
           read -p "   Migrate custom content to P0 before updating? (Y/n): " MIGRATE
           MIGRATE=$(echo "$MIGRATE" | tr '[:upper:]' '[:lower:]')
-          if [ "$MIGRATE" != "n" ] && [ "$MIGRATE" != "no" ]; then
+          if ! [[ "$MIGRATE" == n* ]]; then
             # Find or create P0 section
             if grep -q "^### P0:" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
               # Count existing P0 sub-principles to determine next letter
@@ -294,7 +294,7 @@ EOPR
         echo "   ⚠️  Replacing will overwrite any custom additions you made to this principle."
         read -p "   Update ${pnum}? (y/N): " UPDATE_PRINCIPLE
         UPDATE_PRINCIPLE=$(echo "$UPDATE_PRINCIPLE" | tr '[:upper:]' '[:lower:]')
-        if [ "$UPDATE_PRINCIPLE" = "y" ] || [ "$UPDATE_PRINCIPLE" = "yes" ]; then
+        if [[ "$UPDATE_PRINCIPLE" == y* ]]; then
           # Find the start and end line of the existing principle block
           start_line=""; end_line=""; next_section=""
           start_line=$(grep -n "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
@@ -585,7 +585,7 @@ if [ ! -f "$WORKSPACE/SOUL.md" ]; then
   echo "   ⚠️  SOUL.md is missing"
   read -p "   Create default SOUL.md? (Y/n): " CREATE_SOUL
   CREATE_SOUL=$(echo "$CREATE_SOUL" | tr '[:upper:]' '[:lower:]')
-  if [ "$CREATE_SOUL" != "n" ] && [ "$CREATE_SOUL" != "no" ]; then
+  if ! [[ "$CREATE_SOUL" == n* ]]; then
     if [ "$DRY_RUN" != "true" ]; then
       cat > "$WORKSPACE/SOUL.md" << 'SOULEOF'
 # SOUL.md — Who You Are
@@ -632,7 +632,7 @@ if [ ! -f "$WORKSPACE/USER.md" ]; then
   echo "   ⚠️  USER.md is missing"
   read -p "   Create default USER.md? (Y/n): " CREATE_USER
   CREATE_USER=$(echo "$CREATE_USER" | tr '[:upper:]' '[:lower:]')
-  if [ "$CREATE_USER" != "n" ] && [ "$CREATE_USER" != "no" ]; then
+  if ! [[ "$CREATE_USER" == n* ]]; then
     if [ "$DRY_RUN" != "true" ]; then
       cat > "$WORKSPACE/USER.md" << 'USEREOF'
 # USER.md — About Your Human
@@ -715,7 +715,7 @@ if [ -f "$WORKSPACE/AGENTS.md" ]; then
     echo "   ⚠️  AGENTS.md is missing: ${AGENTS_WARNINGS[*]}"
     read -p "   Back up current and regenerate AGENTS.md? (y/N): " REGEN_AGENTS
     REGEN_AGENTS=$(echo "$REGEN_AGENTS" | tr '[:upper:]' '[:lower:]')
-    if [ "$REGEN_AGENTS" = "y" ] || [ "$REGEN_AGENTS" = "yes" ]; then
+    if [[ "$REGEN_AGENTS" == y* ]]; then
       if [ "$DRY_RUN" != "true" ]; then
         # Extract custom sections from existing AGENTS.md before regenerating
         # Standard sections that the template provides:
@@ -867,7 +867,7 @@ if [ -f "$WORKSPACE/BOOTSTRAP.md" ]; then
     echo "   ⚠️  BOOTSTRAP.md is missing: ${BOOTSTRAP_WARNINGS[*]}"
     read -p "   Back up current and regenerate BOOTSTRAP.md? (y/N): " REGEN_BOOT
     REGEN_BOOT=$(echo "$REGEN_BOOT" | tr '[:upper:]' '[:lower:]')
-    if [ "$REGEN_BOOT" = "y" ] || [ "$REGEN_BOOT" = "yes" ]; then
+    if [[ "$REGEN_BOOT" == y* ]]; then
       if [ "$DRY_RUN" != "true" ]; then
         # Extract custom sections from existing BOOTSTRAP.md
         BOOT_STANDARD="First-Run Checklist|Silent Replies|Sub-Agent Protocol"
@@ -940,7 +940,7 @@ if command -v openclaw >/dev/null 2>&1; then
     echo "   ⚠️  Daily Memory Distillation cron not found"
     read -p "   Create it now? (Y/n): " CREATE_DAILY
     CREATE_DAILY=$(echo "$CREATE_DAILY" | tr '[:upper:]' '[:lower:]')
-    if [ "$CREATE_DAILY" != "n" ] && [ "$CREATE_DAILY" != "no" ]; then
+    if ! [[ "$CREATE_DAILY" == n* ]]; then
       # Detect timezone
       CRON_TZ="${CLAWD_TZ:-}"
       if [ -z "$CRON_TZ" ] && [ -f /etc/timezone ]; then
@@ -971,7 +971,7 @@ if command -v openclaw >/dev/null 2>&1; then
     echo "   ⚠️  Weekly Synthesis cron not found"
     read -p "   Create it now? (Y/n): " CREATE_WEEKLY
     CREATE_WEEKLY=$(echo "$CREATE_WEEKLY" | tr '[:upper:]' '[:lower:]')
-    if [ "$CREATE_WEEKLY" != "n" ] && [ "$CREATE_WEEKLY" != "no" ]; then
+    if ! [[ "$CREATE_WEEKLY" == n* ]]; then
       CRON_TZ="${CRON_TZ:-${CLAWD_TZ:-UTC}}"
       if [ "$DRY_RUN" != "true" ]; then
         openclaw cron add \
@@ -1005,7 +1005,7 @@ if ! crontab -l 2>/dev/null | grep -q "metrics.sh"; then
   echo ""
   read -p "📊 New feature: daily metrics tracking (knowledge growth over time). Enable? (y/N): " ENABLE_METRICS
   ENABLE_METRICS=$(echo "$ENABLE_METRICS" | tr '[:upper:]' '[:lower:]')
-  if [ "$ENABLE_METRICS" = "y" ] || [ "$ENABLE_METRICS" = "yes" ]; then
+  if [[ "$ENABLE_METRICS" == y* ]]; then
     if [ -f "$SKILL_DIR/metrics.sh" ]; then
       if [ "$DRY_RUN" != "true" ]; then
         cp "$SKILL_DIR/metrics.sh" "$WORKSPACE/scripts/metrics.sh"

@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.10"
+OPENCORTEX_VERSION="3.4.11"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -598,7 +598,7 @@ Discovered preferences, organized by category. Updated by nightly distillation w
 ## Environment & Setup
 (add as discovered)'
 
-if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
+if [[ "$ENABLE_VOICE" == y* ]]; then
   create_if_missing "$WORKSPACE/memory/VOICE.md" '# VOICE.md — How My Human Communicates
 
 A living profile of communication style, vocabulary, and tone. Updated nightly by analyzing conversations. Used when ghostwriting on their behalf (community posts, emails, social media) — not for regular conversation.
@@ -719,7 +719,7 @@ fi
 # --- Git Backup (optional) ---
 echo ""
 read -p "📦 Set up git backup with secret scrubbing? (y/N): " SETUP_GIT
-if [ "$SETUP_GIT" = "y" ] || [ "$SETUP_GIT" = "Y" ]; then
+if [[ "${SETUP_GIT,,}" == y* ]]; then
 
   # Copy bundled scripts (fully inspectable in the skill package)
   SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -772,7 +772,7 @@ else
 fi
 
 # --- Metrics (optional) ---
-if [ "$ENABLE_METRICS" = "y" ] || [ "$ENABLE_METRICS" = "yes" ]; then
+if [[ "$ENABLE_METRICS" == y* ]]; then
   echo ""
   echo "📊 Setting up metrics tracking..."
 
@@ -840,7 +840,7 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔑 Opt-in feature environment variables:"
 echo ""
-if [ "$ENABLE_VOICE" = "y" ] || [ "$ENABLE_VOICE" = "yes" ]; then
+if [[ "$ENABLE_VOICE" == y* ]]; then
   echo "   Voice profiling is enabled in the cron (you said yes)."
   echo "   To activate it at runtime, set this in your OpenClaw environment:"
   echo "     export OPENCORTEX_VOICE_PROFILE=1"
@@ -851,7 +851,7 @@ else
   echo "   To enable later: set OPENCORTEX_VOICE_PROFILE=1 in your OpenClaw environment."
   echo ""
 fi
-if [ "$ENABLE_INFRA" = "y" ] || [ "$ENABLE_INFRA" = "yes" ]; then
+if [[ "$ENABLE_INFRA" == y* ]]; then
   echo "   Infrastructure auto-collection is enabled in the cron (you said yes)."
   echo "   To activate it at runtime, set this in your OpenClaw environment:"
   echo "     export OPENCORTEX_INFRA_COLLECT=1"
