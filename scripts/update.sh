@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.2.1"
+OPENCORTEX_VERSION="3.2.2"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -181,11 +181,22 @@ EOPR
       expected_title=""
       expected_title=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | head -1)
       if [ "$current_title" != "$expected_title" ]; then
-        echo "   🔄 ${pnum} outdated — will update"
+        echo "   🔄 ${pnum} title changed — will update"
         OUTDATED_PRINCIPLES+=("$pnum")
       else
-        echo "   ⏭️  ${pnum} already exists (skipped)"
-        SKIPPED=$((SKIPPED + 1))
+        # Title matches — check if body content has changed
+        # Extract current principle body from MEMORY.md (from ### Px: to next ### P or ---)
+        current_body=$(sed -n "/^### ${pnum}:/,/^### P[0-9]\|^---/{/^### P[0-9]/!{/^---/!p;}}" "$WORKSPACE/MEMORY.md" 2>/dev/null | sed '1d')
+        expected_body=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | sed '1d')
+        current_hash=$(printf '%s' "$current_body" | tr -d '[:space:]' | md5sum | cut -d' ' -f1)
+        expected_hash=$(printf '%s' "$expected_body" | tr -d '[:space:]' | md5sum | cut -d' ' -f1)
+        if [ "$current_hash" != "$expected_hash" ]; then
+          echo "   🔄 ${pnum} content changed — will update"
+          OUTDATED_PRINCIPLES+=("$pnum")
+        else
+          echo "   ⏭️  ${pnum} already exists (skipped)"
+          SKIPPED=$((SKIPPED + 1))
+        fi
       fi
     else
       echo "   ⚠️  ${pnum} missing — will add"
