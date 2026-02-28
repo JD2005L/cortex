@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.3.1"
+OPENCORTEX_VERSION="3.3.2"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -265,6 +265,18 @@ Live in MEMORY.md under 🔴 PRINCIPLES. Follow them always.
 
 **Never delegate:** Conversation, confirmations, principle changes, ambiguous decisions
 
+## Custom Principles (P0)
+When the user asks to add a new principle, even if they ask for P9, P10, or any number beyond P8:
+1. All custom principles go in P0 as sub-principles (P0-A, P0-B, P0-C, etc.)
+2. Explain that P1-P8 are managed by OpenCortex and P0 is the dedicated space for custom additions
+3. Before adding, assess whether it truly belongs as a principle or would be better as:
+   - A **preference** (memory/preferences.md) — if it is about how the user likes things done
+   - A **decision** (relevant project file) — if it is a one-time choice, not an ongoing rule
+   - A **runbook** (memory/runbooks/) — if it is a step-by-step procedure
+   - An **AGENTS.md rule** — if it is about agent behavior during boot or delegation
+4. Check for conflicts with P1-P8. If the proposed principle would contradict an existing one, explain the conflict and work with the user to resolve it before adding
+5. A principle should be a persistent behavioral rule that applies across all sessions and all work
+
 ## Write Before Responding (P2)
 When the user states a preference, makes a decision, gives a deadline, or corrects you:
 1. Write it to the relevant memory file FIRST
@@ -317,7 +329,7 @@ if [ ! -f "$WORKSPACE/MEMORY.md" ]; then
 ## 🔴 PRINCIPLES (always loaded, always followed)
 
 ### P0: Custom Principles
-Use this section for principles specific to your setup that should not interfere with the standard P1-P8. Add sub-principles as P0-A, P0-B, P0-C, etc. These are never modified by OpenCortex updates.
+Your custom principles go here as P0-A, P0-B, P0-C, etc. All custom principles belong in P0 regardless of how they are requested. These are never modified by OpenCortex updates.
 
 ### P1: Delegate First
 Assess every task for sub-agent delegation before starting. Stay available. Assign sub-agents by complexity using whatever models are configured:
@@ -405,7 +417,7 @@ elif ! grep -q "PRINCIPLES" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
 ## 🔴 PRINCIPLES (always loaded, always followed)
 
 ### P0: Custom Principles
-Use this section for principles specific to your setup that should not interfere with the standard P1-P8. Add sub-principles as P0-A, P0-B, P0-C, etc. These are never modified by OpenCortex updates.
+Your custom principles go here as P0-A, P0-B, P0-C, etc. All custom principles belong in P0 regardless of how they are requested. These are never modified by OpenCortex updates.
 
 ### P1: Delegate First
 Assess every task for sub-agent delegation before starting. Stay available. Assign sub-agents by complexity using whatever models are configured:
