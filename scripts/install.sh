@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.1"
+OPENCORTEX_VERSION="3.5.2"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -108,11 +108,29 @@ if [ "$DRY_RUN" = "true" ]; then
   echo ""
 fi
 
+# Detect interactive terminal
+INTERACTIVE=false
+if [ -t 0 ]; then
+  INTERACTIVE=true
+fi
+
 # Helper: ask y/n question, loop until valid answer
+# In non-interactive mode: always uses default. If no default, returns 1 (no).
 ask_yn() {
   local prompt="$1"
   local default="${2:-}"
   local answer
+
+  if [ "$INTERACTIVE" != "true" ]; then
+    if [ "$default" = "y" ]; then
+      echo "${prompt}y (auto — non-interactive)"
+      return 0
+    else
+      echo "${prompt}n (auto — non-interactive)"
+      return 1
+    fi
+  fi
+
   while true; do
     read -p "$prompt" answer
     answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')

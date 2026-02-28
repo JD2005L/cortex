@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.1"
+OPENCORTEX_VERSION="3.5.2"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -21,13 +21,31 @@ if [ "$DRY_RUN" = "true" ]; then
   echo ""
 fi
 
+# Detect interactive terminal
+INTERACTIVE=false
+if [ -t 0 ]; then
+  INTERACTIVE=true
+fi
+
 # Helper: ask y/n question, loop until valid answer
 # Usage: ask_yn "prompt (y/N): " [default]
 # default: y or n (what empty input means). No default = must answer.
+# In non-interactive mode: always uses default. If no default, returns 1 (no).
 ask_yn() {
   local prompt="$1"
   local default="${2:-}"
   local answer
+
+  if [ "$INTERACTIVE" != "true" ]; then
+    if [ "$default" = "y" ]; then
+      echo "${prompt}y (auto — non-interactive)"
+      return 0
+    else
+      echo "${prompt}n (auto — non-interactive)"
+      return 1
+    fi
+  fi
+
   while true; do
     read -p "$prompt" answer
     answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
@@ -39,6 +57,26 @@ ask_yn() {
         elif [ "$default" = "n" ]; then return 1;
         else echo "   Please enter y or n."; fi ;;
       *) echo "   Please enter y or n." ;;
+    esac
+  done
+}
+
+# Helper: ask m/r/k question for non-interactive mode
+# Always returns 'k' (keep) when non-interactive
+ask_mrk() {
+  local prompt="$1"
+  local answer
+  if [ "$INTERACTIVE" != "true" ]; then
+    echo "${prompt}k (auto — non-interactive)"
+    echo "k"
+    return
+  fi
+  while true; do
+    read -p "$prompt" answer
+    answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
+    case "$answer" in
+      m|r|k) echo "$answer"; return ;;
+      *) echo "   Please enter m, r, or k." >&2 ;;
     esac
   done
 }
@@ -395,17 +433,28 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
       extra_body=$(awk "/^### ${extra_pnum}:/{found=1} found{if(/^### P[0-9]/ && !/^### ${extra_pnum}:/)exit; if(/^---$/)exit; if(/^## /)exit; print}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
 
       # Check if this is a duplicate of an existing P1-P8
+      # Must match BOTH title AND body content to be considered a duplicate
       is_duplicate=false
+      dup_of=""
       for std_pnum in P1 P2 P3 P4 P5 P6 P7 P8; do
         std_title=$(grep "^### ${std_pnum}:" "$WORKSPACE/MEMORY.md" 2>/dev/null | head -1)
         if [ -n "$std_title" ]; then
-          # Compare titles (strip the Px: prefix)
           extra_name=$(echo "$extra_title" | sed 's/^### P[0-9]*: //')
           std_name=$(echo "$std_title" | sed 's/^### P[0-9]*: //')
           if [ "$extra_name" = "$std_name" ]; then
-            is_duplicate=true
-            echo "   🔄 $extra_pnum is a duplicate of $std_pnum ($std_name)"
-            break
+            # Title matches — now compare body content
+            std_body=$(awk "/^### ${std_pnum}:/{found=1} found{if(/^### P[0-9]/ && !/^### ${std_pnum}:/)exit; if(/^---$/)exit; if(/^## /)exit; print}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
+            # Compare using hash of whitespace-stripped content
+            extra_hash=$(echo "$extra_body" | tr -d '[:space:]' | md5sum | cut -d' ' -f1)
+            std_hash=$(echo "$std_body" | tr -d '[:space:]' | md5sum | cut -d' ' -f1)
+            if [ "$extra_hash" = "$std_hash" ]; then
+              is_duplicate=true
+              dup_of="$std_pnum"
+              echo "   🔄 $extra_pnum is a full duplicate of $std_pnum ($std_name) — same title AND body"
+              break
+            else
+              echo "   ℹ️  $extra_pnum has same title as $std_pnum ($std_name) but DIFFERENT body content"
+            fi
           fi
         fi
       done
@@ -436,10 +485,8 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
         echo "     m = Move to P0 as custom sub-principle"
         echo "     r = Remove entirely"
         echo "     k = Keep as-is (no change)"
-        while true; do
-          read -p "   Action for $extra_pnum? (m/r/k): " ACTION
-          ACTION=$(echo "$ACTION" | tr '[:upper:]' '[:lower:]')
-          case "$ACTION" in
+        ACTION=$(ask_mrk "   Action for $extra_pnum? (m/r/k): ")
+        case "$ACTION" in
             m)
               if [ "$DRY_RUN" != "true" ]; then
                 # Count existing P0 sub-principles
@@ -477,7 +524,7 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
                 echo "   ✅ Moved to P0-${next_letter}, removed $extra_pnum"
                 UPDATED=$((UPDATED + 1))
               fi
-              break ;;
+              ;;
             r)
               if [ "$DRY_RUN" != "true" ]; then
                 start_line=$(grep -n "^### ${extra_pnum}:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
@@ -494,14 +541,12 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
                 echo "   ✅ Removed $extra_pnum"
                 UPDATED=$((UPDATED + 1))
               fi
-              break ;;
+              ;;
             k)
               echo "   ⏭️  Kept $extra_pnum"
               SKIPPED=$((SKIPPED + 1))
-              break ;;
-            *) echo "   Please enter m, r, or k." ;;
-          esac
-        done
+              ;;
+        esac
       fi
     done <<< "$EXTRA_PRINCIPLES"
   else
