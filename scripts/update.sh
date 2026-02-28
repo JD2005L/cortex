@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.15"
+OPENCORTEX_VERSION="3.5.16"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -118,11 +118,21 @@ if command -v openclaw &>/dev/null; then
     ' 2>/dev/null || true
   }
 
+  # Helper: extract current message for a cron ID from JSON
+  get_cron_msg() {
+    local cron_id="$1"
+    echo "$CRON_JSON" | tr '\n' ' ' | grep -oP "\"id\":\\s*\"${cron_id}\"[^}]*\"message\":\\s*\"[^\"]*\"" | grep -oP '"message":\s*"\K[^"]*' || true
+  }
+
   DAILY_ID=$(get_cron_id "Daily Memory Distillation")
   WEEKLY_ID=$(get_cron_id "Weekly Synthesis")
 
   if [ -n "$DAILY_ID" ]; then
-    if [ "$DRY_RUN" = "true" ]; then
+    CURRENT_DAILY_MSG=$(get_cron_msg "$DAILY_ID")
+    if [ "$CURRENT_DAILY_MSG" = "$DAILY_MSG" ]; then
+      echo "   ⏭️  'Daily Memory Distillation' message already current"
+      SKIPPED=$((SKIPPED + 1))
+    elif [ "$DRY_RUN" = "true" ]; then
       echo "   [DRY RUN] Would update 'Daily Memory Distillation' (id: $DAILY_ID) message"
       UPDATED=$((UPDATED + 1))
     else
@@ -137,7 +147,11 @@ if command -v openclaw &>/dev/null; then
   fi
 
   if [ -n "$WEEKLY_ID" ]; then
-    if [ "$DRY_RUN" = "true" ]; then
+    CURRENT_WEEKLY_MSG=$(get_cron_msg "$WEEKLY_ID")
+    if [ "$CURRENT_WEEKLY_MSG" = "$WEEKLY_MSG" ]; then
+      echo "   ⏭️  'Weekly Synthesis' message already current"
+      SKIPPED=$((SKIPPED + 1))
+    elif [ "$DRY_RUN" = "true" ]; then
       echo "   [DRY RUN] Would update 'Weekly Synthesis' (id: $WEEKLY_ID) message"
       UPDATED=$((UPDATED + 1))
     else
