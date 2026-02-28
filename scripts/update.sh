@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.2"
+OPENCORTEX_VERSION="3.4.3"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -575,27 +575,210 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
   done
 fi
 
-# Check AGENTS.md for key sections
-if [ -f "$WORKSPACE/AGENTS.md" ]; then
-  AGENTS_WARNINGS=()
-  if ! grep -q "contacts\|Contacts" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
-    AGENTS_WARNINGS+=("contacts/workflows/preferences categories")
+# ─────────────────────────────────────────────────────────────────────────────
+# Part 5: Template files — check existence and offer to regenerate
+# ─────────────────────────────────────────────────────────────────────────────
+echo "📄 Checking template files..."
+
+# SOUL.md
+if [ ! -f "$WORKSPACE/SOUL.md" ]; then
+  echo "   ⚠️  SOUL.md is missing"
+  read -p "   Create default SOUL.md? (Y/n): " CREATE_SOUL
+  CREATE_SOUL=$(echo "$CREATE_SOUL" | tr '[:upper:]' '[:lower:]')
+  if [ "$CREATE_SOUL" != "n" ] && [ "$CREATE_SOUL" != "no" ]; then
+    if [ "$DRY_RUN" != "true" ]; then
+      cat > "$WORKSPACE/SOUL.md" << 'SOULEOF'
+# SOUL.md — Who You Are
+
+*Customize this to define your agent's personality and boundaries.*
+
+## Core Truths
+
+**Be genuinely helpful, not performatively helpful.** Skip filler words and just help. Actions over ceremony.
+
+**Have opinions.** You're allowed to disagree, prefer things, find stuff amusing or boring.
+
+**Be resourceful before asking.** Try to figure it out first. Read the file. Check the context. Search for it. Then ask if stuck.
+
+**Earn trust through competence.** Be careful with external actions. Be bold with internal ones.
+
+**Remember you're a guest.** You have access to someone's life. Treat it with respect.
+
+## Boundaries
+
+- Private things stay private. Period.
+- When in doubt, ask before acting externally.
+- Never send half-baked replies to messaging surfaces.
+
+## Continuity
+
+Each session, you wake up fresh. Your files are your memory. Read them. Update them.
+
+---
+
+*This file is yours to evolve. As you learn who you are, update it.*
+SOULEOF
+      echo "   ✅ Created SOUL.md"
+      UPDATED=$((UPDATED + 1))
+    fi
   fi
-  if ! grep -q "Write Before Responding\|write-ahead\|Write before responding" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
-    AGENTS_WARNINGS+=("Write Before Responding (P2) protocol")
+else
+  echo "   ⏭️  SOUL.md exists (skipped)"
+  SKIPPED=$((SKIPPED + 1))
+fi
+
+# USER.md
+if [ ! -f "$WORKSPACE/USER.md" ]; then
+  echo "   ⚠️  USER.md is missing"
+  read -p "   Create default USER.md? (Y/n): " CREATE_USER
+  CREATE_USER=$(echo "$CREATE_USER" | tr '[:upper:]' '[:lower:]')
+  if [ "$CREATE_USER" != "n" ] && [ "$CREATE_USER" != "no" ]; then
+    if [ "$DRY_RUN" != "true" ]; then
+      cat > "$WORKSPACE/USER.md" << 'USEREOF'
+# USER.md — About Your Human
+
+- **Name:** (your name)
+- **Location:** (city, country)
+- **Timezone:** (timezone)
+
+## Communication Style
+
+- **Prefers:** (direct? detailed? casual?)
+- **Values:** (what matters to them?)
+
+## Projects
+
+(list active projects here as the agent learns about them)
+
+## Preferences
+
+(agent will fill this in over time from conversations)
+USEREOF
+      echo "   ✅ Created USER.md"
+      UPDATED=$((UPDATED + 1))
+    fi
   fi
-  if [ ${#AGENTS_WARNINGS[@]} -gt 0 ]; then
-    echo "   ℹ️  AGENTS.md may be missing: ${AGENTS_WARNINGS[*]}"
-    echo "      Consider backing up and re-running install to regenerate AGENTS.md"
+else
+  echo "   ⏭️  USER.md exists (skipped)"
+  SKIPPED=$((SKIPPED + 1))
+fi
+
+# .gitignore — ensure sensitive entries
+if [ -f "$WORKSPACE/.gitignore" ]; then
+  GITIGNORE_ADDS=()
+  for entry in ".vault/" ".secrets-map" ".env" "*.key" "*.pem"; do
+    if ! grep -qF "$entry" "$WORKSPACE/.gitignore" 2>/dev/null; then
+      GITIGNORE_ADDS+=("$entry")
+    fi
+  done
+  if [ ${#GITIGNORE_ADDS[@]} -gt 0 ]; then
+    if [ "$DRY_RUN" != "true" ]; then
+      for entry in "${GITIGNORE_ADDS[@]}"; do
+        echo "$entry" >> "$WORKSPACE/.gitignore"
+      done
+      echo "   ✅ Added missing .gitignore entries: ${GITIGNORE_ADDS[*]}"
+      UPDATED=$((UPDATED + 1))
+    else
+      echo "   [DRY RUN] Would add .gitignore entries: ${GITIGNORE_ADDS[*]}"
+    fi
+  else
+    echo "   ⏭️  .gitignore already has sensitive entries (skipped)"
+    SKIPPED=$((SKIPPED + 1))
+  fi
+elif [ ! -f "$WORKSPACE/.gitignore" ]; then
+  if [ "$DRY_RUN" != "true" ]; then
+    printf '.vault/\n.secrets-map\n.env\n*.key\n*.pem\n' > "$WORKSPACE/.gitignore"
+    echo "   ✅ Created .gitignore with sensitive entries"
+    UPDATED=$((UPDATED + 1))
   fi
 fi
 
-# Check BOOTSTRAP.md for key content
-if [ -f "$WORKSPACE/BOOTSTRAP.md" ]; then
-  if ! grep -q "Sub-Agent Protocol\|sub-agent\|debrief" "$WORKSPACE/BOOTSTRAP.md" 2>/dev/null; then
-    echo "   ℹ️  BOOTSTRAP.md may need updating — missing sub-agent debrief protocol"
-    echo "      Consider backing up and re-running install to regenerate BOOTSTRAP.md"
+# AGENTS.md — check for key sections, offer regeneration
+if [ -f "$WORKSPACE/AGENTS.md" ]; then
+  AGENTS_WARNINGS=()
+  if ! grep -q "contacts\|Contacts" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
+    AGENTS_WARNINGS+=("contacts/workflows/preferences")
   fi
+  if ! grep -q "Write Before Responding\|write-ahead\|Write before responding" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
+    AGENTS_WARNINGS+=("Write Before Responding (P2)")
+  fi
+  if ! grep -q "Custom Principles\|P0" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
+    AGENTS_WARNINGS+=("Custom Principles (P0) guidance")
+  fi
+  if [ ${#AGENTS_WARNINGS[@]} -gt 0 ]; then
+    echo "   ⚠️  AGENTS.md is missing: ${AGENTS_WARNINGS[*]}"
+    read -p "   Back up current AGENTS.md and regenerate? (y/N): " REGEN_AGENTS
+    REGEN_AGENTS=$(echo "$REGEN_AGENTS" | tr '[:upper:]' '[:lower:]')
+    if [ "$REGEN_AGENTS" = "y" ] || [ "$REGEN_AGENTS" = "yes" ]; then
+      if [ "$DRY_RUN" != "true" ]; then
+        cp "$WORKSPACE/AGENTS.md" "$WORKSPACE/AGENTS.md.bak.$(date +%Y%m%d%H%M%S)"
+        echo "   📦 Backed up to AGENTS.md.bak.*"
+        echo "   ℹ️  Run install.sh (option 2: Full reinstall) to regenerate AGENTS.md"
+      fi
+    else
+      echo "   ⏭️  Kept existing AGENTS.md"
+    fi
+  else
+    echo "   ⏭️  AGENTS.md looks current (skipped)"
+    SKIPPED=$((SKIPPED + 1))
+  fi
+else
+  echo "   ⚠️  AGENTS.md missing — run install.sh to create it"
+fi
+
+# BOOTSTRAP.md — check for key content, offer regeneration
+if [ -f "$WORKSPACE/BOOTSTRAP.md" ]; then
+  BOOTSTRAP_WARNINGS=()
+  if ! grep -q "Sub-Agent Protocol\|sub-agent\|debrief" "$WORKSPACE/BOOTSTRAP.md" 2>/dev/null; then
+    BOOTSTRAP_WARNINGS+=("sub-agent debrief protocol")
+  fi
+  if ! grep -q "HEARTBEAT\|heartbeat" "$WORKSPACE/BOOTSTRAP.md" 2>/dev/null; then
+    BOOTSTRAP_WARNINGS+=("heartbeat handling")
+  fi
+  if [ ${#BOOTSTRAP_WARNINGS[@]} -gt 0 ]; then
+    echo "   ⚠️  BOOTSTRAP.md is missing: ${BOOTSTRAP_WARNINGS[*]}"
+    read -p "   Back up current BOOTSTRAP.md and regenerate? (y/N): " REGEN_BOOT
+    REGEN_BOOT=$(echo "$REGEN_BOOT" | tr '[:upper:]' '[:lower:]')
+    if [ "$REGEN_BOOT" = "y" ] || [ "$REGEN_BOOT" = "yes" ]; then
+      if [ "$DRY_RUN" != "true" ]; then
+        cp "$WORKSPACE/BOOTSTRAP.md" "$WORKSPACE/BOOTSTRAP.md.bak.$(date +%Y%m%d%H%M%S)"
+        echo "   📦 Backed up to BOOTSTRAP.md.bak.*"
+        echo "   ℹ️  Run install.sh (option 2: Full reinstall) to regenerate BOOTSTRAP.md"
+      fi
+    else
+      echo "   ⏭️  Kept existing BOOTSTRAP.md"
+    fi
+  else
+    echo "   ⏭️  BOOTSTRAP.md looks current (skipped)"
+    SKIPPED=$((SKIPPED + 1))
+  fi
+else
+  echo "   ⚠️  BOOTSTRAP.md missing — run install.sh to create it"
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Part 6: Cron jobs — verify they exist
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
+echo "⏰ Verifying cron jobs exist..."
+if command -v openclaw >/dev/null 2>&1; then
+  CRON_LIST=$(openclaw cron list 2>/dev/null || true)
+  if echo "$CRON_LIST" | grep -qi "Daily Memory Distillation"; then
+    echo "   ⏭️  Daily Memory Distillation cron exists"
+    SKIPPED=$((SKIPPED + 1))
+  else
+    echo "   ⚠️  Daily Memory Distillation cron not found"
+    echo "      Run install.sh to create it, or manually add with: openclaw cron add"
+  fi
+  if echo "$CRON_LIST" | grep -qi "Weekly Synthesis"; then
+    echo "   ⏭️  Weekly Synthesis cron exists"
+    SKIPPED=$((SKIPPED + 1))
+  else
+    echo "   ⚠️  Weekly Synthesis cron not found"
+    echo "      Run install.sh to create it, or manually add with: openclaw cron add"
+  fi
+else
+  echo "   ⏭️  openclaw not in PATH — skipping cron existence check"
 fi
 
 echo ""
