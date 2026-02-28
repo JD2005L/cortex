@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.2.4"
+OPENCORTEX_VERSION="3.2.5"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -214,14 +214,25 @@ EOPR
         current_title=$(grep "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1)
         expected_title=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | head -1)
         echo ""
+        # Extract current principle body
+        current_full=$(sed -n "/^### ${pnum}:/,/^### P[0-9]\|^---/{/^### P[0-9]/!{/^---/!p;}}" "$WORKSPACE/MEMORY.md" 2>/dev/null)
+        expected_full="${PRINCIPLE_TEXTS[$pnum]}"
+
         if [ "$current_title" != "$expected_title" ]; then
           echo "   ${pnum} title changed:"
           echo "     Current: $current_title"
           echo "     New:     $expected_title"
         else
-          echo "   ${pnum} content updated (title unchanged):"
-          echo "     Title: $current_title"
+          echo "   ${pnum} content updated (title unchanged)"
         fi
+        echo ""
+        echo "   ┌─ Current ──────────────────────────────"
+        echo "$current_full" | sed 's/^/   │ /'
+        echo "   └─────────────────────────────────────────"
+        echo ""
+        echo "   ┌─ New ─────────────────────────────────"
+        echo "$expected_full" | sed 's/^/   │ /'
+        echo "   └─────────────────────────────────────────"
         echo ""
         echo "   ⚠️  Replacing will overwrite any custom additions you made to this principle."
         read -p "   Update ${pnum}? (y/N): " UPDATE_PRINCIPLE
