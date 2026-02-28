@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.9"
+OPENCORTEX_VERSION="3.5.10"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -172,7 +172,6 @@ if command -v openclaw &>/dev/null; then
     echo "   OpenClaw CLI has no --clear-model flag. To remove model overrides manually:"
     echo "   1. Open the TUI: openclaw"
     echo "   2. Go to Cron Jobs → select the job → edit → clear the model field"
-    echo "   Or file a feature request: https://github.com/openclaw/openclaw/issues"
     echo "   (The override is harmless if it matches your gateway default model.)"
   else
     echo "   ✅ No model overrides found"
