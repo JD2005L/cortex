@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.5.10"
+OPENCORTEX_VERSION="3.5.11"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -664,9 +664,9 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
 
     # Find ### subsections under ## Memory Index that are over 10 lines
     # These can be extracted to dedicated files with a reference left behind
-    MEM_INDEX_START=$(grep -n "^## Memory Index" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
-    MEM_INDEX_END=$(tail -n "+$((MEM_INDEX_START + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^## " | head -1 | cut -d: -f1)
+    MEM_INDEX_START=$(grep -n "^## Memory Index" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1 || true)
     if [ -n "$MEM_INDEX_START" ]; then
+    MEM_INDEX_END=$(tail -n "+$((MEM_INDEX_START + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^## " | head -1 | cut -d: -f1 || true)
       if [ -n "$MEM_INDEX_END" ]; then
         MEM_INDEX_END=$((MEM_INDEX_START + MEM_INDEX_END - 1))
       else
@@ -678,7 +678,8 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
       while IFS= read -r sub_header; do
         [ -z "$sub_header" ] && continue
         sub_name=$(echo "$sub_header" | sed 's/^### //' | sed 's/ (.*//')
-        sub_start=$(grep -n "^${sub_header}$" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+        # Use fixed-string grep to handle special chars in headers like (memory/contacts/)
+        sub_start=$(grep -nF "$sub_header" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
         [ -z "$sub_start" ] && continue
         sub_next=$(tail -n "+$((sub_start + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### \|^## " | head -1 | cut -d: -f1)
         if [ -n "$sub_next" ]; then
