@@ -7,7 +7,7 @@ Default OpenClaw memory is a flat MEMORY.md that grows unbounded. Context fills 
 1. **Separation of concerns** — different files for different purposes
 2. **Nightly distillation** — raw daily logs → permanent structured knowledge
 3. **Weekly synthesis** — pattern detection across days
-4. **Principles** — enforced habits that prevent knowledge loss
+4. **Principles** — enforced habits that prevent knowledge loss (P0 for custom, P1-P8 managed)
 5. **Sub-agent debrief loop** — delegated work feeds back into memory
 
 ## File Purposes
@@ -79,13 +79,19 @@ The key insight: **daily distillation + weekly synthesis + decision/preference c
 ## Common Customizations
 
 ### Adding delegation tiers
-Edit MEMORY.md P1 to adjust which model handles what complexity.
+Edit MEMORY.md P1 to adjust which capability tier (Light/Medium/Heavy) handles what complexity. P1 is model-agnostic and works with whatever models you have configured.
 
 ### Changing distillation schedule
 `openclaw cron edit <id> --cron "0 10 * * *" --tz "Your/Timezone"`
 
-### Adding domain-specific principles
-Append to MEMORY.md 🔴 PRINCIPLES. Keep each principle to 1-2 sentences.
+### Adding custom principles
+All custom principles go in P0 as sub-principles (P0-A, P0-B, P0-C, etc.). P1-P8 are managed by OpenCortex updates and should not be modified directly. The agent is instructed to:
+- Route all new principle requests to P0, even if the user asks for P9 or beyond
+- Check for conflicts with P1-P8 before adding
+- Assess whether the request is truly a principle (persistent behavioral rule) or would be better suited as a preference, decision, runbook, or agent rule
+
+### Write-ahead durability (P2)
+When the user states a preference, makes a decision, gives a deadline, or corrects the agent, the agent writes it to the relevant memory file before composing a response. This prevents context loss if the session ends or compacts mid-conversation.
 
 ### Multi-bot setups
 Each bot gets its own OpenCortex install. Share knowledge via:

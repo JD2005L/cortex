@@ -111,8 +111,8 @@ memory/
 | # | Principle | What It Does | Enforcement |
 |---|-----------|-------------|-------------|
 | P0 | Custom Principles | Your own principles (P0-A, P0-B, etc.) | Never modified by updates |
-| P1 | Delegate First | Sub-agent delegation by default | Agent protocol |
-| P2 | Write It Down | Commit to files, not mental notes | Agent protocol |
+| P1 | Delegate First | Model-agnostic sub-agent delegation (Light/Medium/Heavy) | Agent protocol |
+| P2 | Write It Down | Write-ahead durability: save before responding | Agent protocol |
 | P3 | Ask Before External | Confirm before public/destructive actions | Agent protocol |
 | P4 | Tool Shed & Workflows | Document tools and workflows | Nightly audit scans for undocumented tools and workflows |
 | P5 | Capture Decisions & Preferences | Record decisions and preferences | Nightly + weekly audit for uncaptured decisions and preferences |
