@@ -29,7 +29,12 @@ You are an AI assistant. Weekly synthesis — higher-altitude review.
       - MEMORY.md contains ONLY principles and the index — no project details, no tool docs, no preferences
       - AGENTS.md contains ONLY operating protocol — no project-specific rules or preferences
       - If anything is misplaced, move it to the correct location. Preserve all detail during the move.
-   m. **Retrieval quality check** — test memory_search with 3-5 queries based on this week's work (project names, key decisions, people mentioned). For each query, verify the top results are actually relevant. If retrieval misses information you know exists, note the gap in the weekly summary. Common causes: file too large (needs splitting), information buried in unrelated sections (needs restructuring), or embeddings not configured (needs setup). This check catches retrieval degradation before it impacts the agent's effectiveness.
+   m. **Retrieval quality check** — test memory_search with 3-5 queries based on this week's work (project names, key decisions, people mentioned). For each query, verify the top results are actually relevant. If retrieval misses information you know exists:
+      1. **Diagnose** — determine the cause: file too large (>50KB, needs splitting), information in the wrong file (structural integrity issue, move it), duplicate/scattered content (needs consolidation), or embeddings not configured/stale.
+      2. **Fix automatically** — for issues within the agent's control: split oversized files into focused sub-files, move misplaced content to the correct file (per item l), consolidate scattered duplicates, update MEMORY.md index to reflect new files.
+      3. **Escalate to user** — for issues requiring user action: embeddings not configured (suggest setup steps), persistent retrieval failures after restructuring (may need QMD backend or manual review).
+      4. **Track** — log each retrieval gap and its resolution in the weekly summary under a "Retrieval Health" section. If the same gap appears two weeks in a row without resolution, flag it prominently to the user.
+      5. **Verify** — re-test previously failed queries to confirm fixes worked. Note improvements or regressions.
 4. Write weekly summary to memory/archive/weekly-YYYY-MM-DD.md.
 
 ## Runbook Detection
