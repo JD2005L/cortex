@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.3.3"
+OPENCORTEX_VERSION="3.4.0"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -170,6 +170,21 @@ Before telling the user you cannot do something, or asking them to do it manuall
 EOPR
 )
 
+  # Ensure P0 exists (needed for migration from older versions)
+  if ! grep -q "^### P0:" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
+    echo "   ℹ️  Adding P0 (Custom Principles) section for your own additions..."
+    if [ "$DRY_RUN" != "true" ]; then
+      # Insert P0 right after the PRINCIPLES header
+      p_header=$(grep -n "^## .*PRINCIPLES" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+      if [ -n "$p_header" ]; then
+        p0_text="\n### P0: Custom Principles\nYour custom principles go here as P0-A, P0-B, P0-C, etc. All custom principles belong in P0 regardless of how they are requested. These are never modified by OpenCortex updates.\n"
+        sed -i "${p_header}a\\${p0_text}" "$WORKSPACE/MEMORY.md"
+        echo "   ✅ Added P0 section"
+        UPDATED=$((UPDATED + 1))
+      fi
+    fi
+  fi
+
   # Collect missing or outdated principles
   MISSING_PRINCIPLES=()
   OUTDATED_PRINCIPLES=()
@@ -234,6 +249,48 @@ EOPR
         echo "$expected_full" | sed 's/^/   │ /'
         echo "   └─────────────────────────────────────────"
         echo ""
+        # Detect custom additions: lines in current that aren't in the expected version
+        custom_lines=""
+        if [ -n "$current_full" ] && [ -n "$expected_full" ]; then
+          custom_lines=$(diff <(echo "$expected_full") <(echo "$current_full") 2>/dev/null | grep "^> " | sed 's/^> //' | sed '/^$/d' || true)
+        fi
+
+        if [ -n "$custom_lines" ]; then
+          echo "   📋 Custom content detected beyond the standard ${pnum}:"
+          echo "$custom_lines" | sed 's/^/      /'
+          echo ""
+          read -p "   Migrate custom content to P0 before updating? (Y/n): " MIGRATE
+          MIGRATE=$(echo "$MIGRATE" | tr '[:upper:]' '[:lower:]')
+          if [ "$MIGRATE" != "n" ] && [ "$MIGRATE" != "no" ]; then
+            # Find or create P0 section
+            if grep -q "^### P0:" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
+              # Count existing P0 sub-principles to determine next letter
+              existing_count=$(grep -c "^#### P0-" "$WORKSPACE/MEMORY.md" 2>/dev/null || true)
+              existing_count=$(printf '%s' "$existing_count" | tr -dc '0-9')
+              existing_count=${existing_count:-0}
+              next_letter=$(printf "\\$(printf '%03o' $((65 + existing_count)))")
+              # Insert after the P0 description line
+              p0_line=$(grep -n "^### P0:" "$WORKSPACE/MEMORY.md" | head -1 | cut -d: -f1)
+              # Find the next ### heading after P0
+              p0_end=$(tail -n "+$((p0_line + 1))" "$WORKSPACE/MEMORY.md" | grep -n "^### P[0-9]" | head -1 | cut -d: -f1)
+              if [ -n "$p0_end" ]; then
+                insert_at=$((p0_line + p0_end - 1))
+              else
+                insert_at=$((p0_line + 1))
+              fi
+              # Build the sub-principle
+              sub_principle="\n#### P0-${next_letter}: Custom from ${pnum}\n${custom_lines}\n"
+              sed -i "${insert_at}a\\${sub_principle}" "$WORKSPACE/MEMORY.md"
+              echo "   ✅ Migrated to P0-${next_letter}"
+            else
+              echo "   ⚠️  P0 section not found — custom content preserved in current ${pnum}"
+              echo "      Skipping update to avoid data loss."
+              SKIPPED=$((SKIPPED + 1))
+              continue
+            fi
+          fi
+        fi
+
         echo "   ⚠️  Replacing will overwrite any custom additions you made to this principle."
         read -p "   Update ${pnum}? (y/N): " UPDATE_PRINCIPLE
         UPDATE_PRINCIPLE=$(echo "$UPDATE_PRINCIPLE" | tr '[:upper:]' '[:lower:]')
