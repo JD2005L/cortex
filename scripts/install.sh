@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.1.5"
+OPENCORTEX_VERSION="3.2.0"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -265,6 +265,12 @@ Live in MEMORY.md under 🔴 PRINCIPLES. Follow them always.
 
 **Never delegate:** Conversation, confirmations, principle changes, ambiguous decisions
 
+## Write Before Responding (P2)
+When the user states a preference, makes a decision, gives a deadline, or corrects you:
+1. Write it to the relevant memory file FIRST
+2. Then compose and send your response
+This ensures nothing is lost if the session ends or compacts between your response and the write.
+
 ## Memory Structure
 - MEMORY.md — Principles + index (< 3KB, fast load)
 - TOOLS.md — Tool shed with abilities descriptions
@@ -319,6 +325,7 @@ Assess every task for sub-agent delegation before starting. Stay available.
 
 ### P2: Write It Down
 Do not mentally note — commit to memory files. Update indexes after significant work.
+Write before responding: when a user states a preference, makes a decision, gives a deadline, or corrects you, write it to the relevant memory file before composing your response. If the session ends or compacts before you save, the context is lost. Writing first ensures durability.
 
 ### P3: Ask Before External Actions
 Emails, public posts, destructive ops — get confirmation first.
@@ -403,6 +410,7 @@ Assess every task for sub-agent delegation before starting. Stay available.
 
 ### P2: Write It Down
 Do not mentally note — commit to memory files. Update indexes after significant work.
+Write before responding: when a user states a preference, makes a decision, gives a deadline, or corrects you, write it to the relevant memory file before composing your response. If the session ends or compacts before you save, the context is lost. Writing first ensures durability.
 
 ### P3: Ask Before External Actions
 Emails, public posts, destructive ops — get confirmation first.

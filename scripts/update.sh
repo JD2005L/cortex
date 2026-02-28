@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.1.5"
+OPENCORTEX_VERSION="3.2.0"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -121,6 +121,7 @@ EOPR
   PRINCIPLE_TEXTS["P2"]=$(cat <<'EOPR'
 ### P2: Write It Down
 Do not mentally note — commit to memory files. Update indexes after significant work.
+Write before responding: when a user states a preference, makes a decision, gives a deadline, or corrects you, write it to the relevant memory file before composing your response. If the session ends or compacts before you save, the context is lost. Writing first ensures durability.
 EOPR
 )
 
