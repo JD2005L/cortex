@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.2.2"
+OPENCORTEX_VERSION="3.2.3"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -214,9 +214,14 @@ EOPR
         current_title=$(grep "^### ${pnum}:" "$WORKSPACE/MEMORY.md" | head -1)
         expected_title=$(echo "${PRINCIPLE_TEXTS[$pnum]}" | head -1)
         echo ""
-        echo "   ${pnum} title change:"
-        echo "     Current: $current_title"
-        echo "     New:     $expected_title"
+        if [ "$current_title" != "$expected_title" ]; then
+          echo "   ${pnum} title changed:"
+          echo "     Current: $current_title"
+          echo "     New:     $expected_title"
+        else
+          echo "   ${pnum} content updated (title unchanged):"
+          echo "     Title: $current_title"
+        fi
         echo ""
         echo "   ⚠️  Replacing will overwrite any custom additions you made to this principle."
         read -p "   Update ${pnum}? (y/N): " UPDATE_PRINCIPLE
@@ -338,6 +343,56 @@ copy_or_update_script "verify.sh"
 copy_or_update_script "vault.sh"
 copy_or_update_script "metrics.sh"
 copy_or_update_script "git-backup.sh"
+echo ""
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Part 3b: Reference docs — update to latest versions
+# ─────────────────────────────────────────────────────────────────────────────
+echo "📚 Checking reference documents..."
+
+copy_or_update_ref() {
+  local ref_name="$1"
+  local src="$SCRIPT_DIR/../references/$ref_name"
+  local dst="$WORKSPACE/skills/opencortex/references/$ref_name"
+
+  if [ ! -f "$src" ]; then
+    # Try alternate skill path
+    src="$SCRIPT_DIR/../references/$ref_name"
+    [ ! -f "$src" ] && return
+  fi
+
+  mkdir -p "$(dirname "$dst")"
+
+  if [ -f "$dst" ]; then
+    local src_hash dst_hash
+    src_hash=$(md5sum "$src" 2>/dev/null | cut -d' ' -f1)
+    dst_hash=$(md5sum "$dst" 2>/dev/null | cut -d' ' -f1)
+    if [ "$src_hash" = "$dst_hash" ]; then
+      echo "   ⏭️  references/$ref_name already current (skipped)"
+      SKIPPED=$((SKIPPED + 1))
+      return
+    fi
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would update: references/$ref_name"
+    else
+      cp "$src" "$dst"
+      echo "   🔄 Updated references/$ref_name"
+    fi
+    UPDATED=$((UPDATED + 1))
+  else
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "   [DRY RUN] Would copy: references/$ref_name"
+    else
+      cp "$src" "$dst"
+      echo "   ✅ Copied references/$ref_name"
+    fi
+    UPDATED=$((UPDATED + 1))
+  fi
+}
+
+copy_or_update_ref "distillation.md"
+copy_or_update_ref "weekly-synthesis.md"
+copy_or_update_ref "architecture.md"
 
 # Create new directories if missing
 for d in memory/contacts memory/workflows; do
@@ -427,11 +482,26 @@ if [ -f "$WORKSPACE/MEMORY.md" ]; then
   done
 fi
 
-# Check AGENTS.md for metrics/contacts/workflows awareness
+# Check AGENTS.md for key sections
 if [ -f "$WORKSPACE/AGENTS.md" ]; then
+  AGENTS_WARNINGS=()
   if ! grep -q "contacts\|Contacts" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
-    echo "   ℹ️  AGENTS.md may need updating — new memory categories (contacts, workflows, preferences)"
-    echo "      Consider re-running install with option 2 (Full reinstall) to regenerate AGENTS.md"
+    AGENTS_WARNINGS+=("contacts/workflows/preferences categories")
+  fi
+  if ! grep -q "Write Before Responding\|write-ahead\|Write before responding" "$WORKSPACE/AGENTS.md" 2>/dev/null; then
+    AGENTS_WARNINGS+=("Write Before Responding (P2) protocol")
+  fi
+  if [ ${#AGENTS_WARNINGS[@]} -gt 0 ]; then
+    echo "   ℹ️  AGENTS.md may be missing: ${AGENTS_WARNINGS[*]}"
+    echo "      Consider backing up and re-running install to regenerate AGENTS.md"
+  fi
+fi
+
+# Check BOOTSTRAP.md for key content
+if [ -f "$WORKSPACE/BOOTSTRAP.md" ]; then
+  if ! grep -q "Sub-Agent Protocol\|sub-agent\|debrief" "$WORKSPACE/BOOTSTRAP.md" 2>/dev/null; then
+    echo "   ℹ️  BOOTSTRAP.md may need updating — missing sub-agent debrief protocol"
+    echo "      Consider backing up and re-running install to regenerate BOOTSTRAP.md"
   fi
 fi
 
