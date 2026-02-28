@@ -3,7 +3,7 @@
 # Safe to re-run: won't overwrite existing files.
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.3.0"
+OPENCORTEX_VERSION="3.3.1"
 
 # --- Version check: detect existing install and offer update ---
 WORKSPACE="${CLAWD_WORKSPACE:-$(pwd)}"
@@ -316,6 +316,9 @@ if [ ! -f "$WORKSPACE/MEMORY.md" ]; then
 
 ## 🔴 PRINCIPLES (always loaded, always followed)
 
+### P0: Custom Principles
+Use this section for principles specific to your setup that should not interfere with the standard P1-P8. Add sub-principles as P0-A, P0-B, P0-C, etc. These are never modified by OpenCortex updates.
+
 ### P1: Delegate First
 Assess every task for sub-agent delegation before starting. Stay available. Assign sub-agents by complexity using whatever models are configured:
 - **Light:** File ops, searches, data extraction, simple scripts, monitoring, lookups
@@ -400,6 +403,9 @@ elif ! grep -q "PRINCIPLES" "$WORKSPACE/MEMORY.md" 2>/dev/null; then
     PRINCIPLES_BLOCK=$(cat << 'PREOF'
 
 ## 🔴 PRINCIPLES (always loaded, always followed)
+
+### P0: Custom Principles
+Use this section for principles specific to your setup that should not interfere with the standard P1-P8. Add sub-principles as P0-A, P0-B, P0-C, etc. These are never modified by OpenCortex updates.
 
 ### P1: Delegate First
 Assess every task for sub-agent delegation before starting. Stay available. Assign sub-agents by complexity using whatever models are configured:

@@ -73,6 +73,7 @@ The installer detects your existing version and offers: **1) Update** (recommend
 | Content | Update method | User data safe? |
 |---------|--------------|-----------------|
 | Principles (P1-P8) | Hash comparison, asks before replacing | ✅ Asks y/N per principle |
+| P0 (Custom Principles) | Never touched | ✅ Your custom principles are always safe |
 | Helper scripts (verify, vault, metrics, git-backup) | Checksum comparison, auto-replaced | ✅ These aren't user-edited |
 | Reference docs (distillation, weekly-synthesis, architecture) | Checksum comparison, auto-replaced | ✅ These aren't user-edited |
 | Cron job messages | Always updated to latest template | ✅ Only the message text changes |
@@ -105,10 +106,11 @@ memory/
   YYYY-MM-DD.md  ← Today's working log (distilled nightly)
 ```
 
-## Principles (P1–P8)
+## Principles (P0–P8)
 
 | # | Principle | What It Does | Enforcement |
 |---|-----------|-------------|-------------|
+| P0 | Custom Principles | Your own principles (P0-A, P0-B, etc.) | Never modified by updates |
 | P1 | Delegate First | Sub-agent delegation by default | Agent protocol |
 | P2 | Write It Down | Commit to files, not mental notes | Agent protocol |
 | P3 | Ask Before External | Confirm before public/destructive actions | Agent protocol |
