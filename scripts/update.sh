@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-OPENCORTEX_VERSION="3.4.4"
+OPENCORTEX_VERSION="3.4.5"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Flags
@@ -707,13 +707,89 @@ if [ -f "$WORKSPACE/AGENTS.md" ]; then
   fi
   if [ ${#AGENTS_WARNINGS[@]} -gt 0 ]; then
     echo "   ⚠️  AGENTS.md is missing: ${AGENTS_WARNINGS[*]}"
-    read -p "   Back up current AGENTS.md and regenerate? (y/N): " REGEN_AGENTS
+    read -p "   Back up current and regenerate AGENTS.md? (y/N): " REGEN_AGENTS
     REGEN_AGENTS=$(echo "$REGEN_AGENTS" | tr '[:upper:]' '[:lower:]')
     if [ "$REGEN_AGENTS" = "y" ] || [ "$REGEN_AGENTS" = "yes" ]; then
       if [ "$DRY_RUN" != "true" ]; then
         cp "$WORKSPACE/AGENTS.md" "$WORKSPACE/AGENTS.md.bak.$(date +%Y%m%d%H%M%S)"
         echo "   📦 Backed up to AGENTS.md.bak.*"
-        echo "   ℹ️  Run install.sh (option 2: Full reinstall) to regenerate AGENTS.md"
+
+        # Determine boot sequence
+        AGENTS_BOOT="## Boot Sequence"$'\n'"1. Read SOUL.md"$'\n'"2. Read MEMORY.md — principles + memory index"$'\n'"3. Use memory_search for anything deeper"
+        if [ -f "$WORKSPACE/INFRA.md" ]; then
+          AGENTS_BOOT="$AGENTS_BOOT"$'\n'"4. Read INFRA.md — infrastructure reference"
+        fi
+
+        cat > "$WORKSPACE/AGENTS.md" << AGENTSEOF
+# AGENTS.md — Operating Protocol
+
+$AGENTS_BOOT
+
+## Principles
+Live in MEMORY.md under 🔴 PRINCIPLES. Follow them always.
+
+## Delegation (P1)
+**Default action: delegate.** Before doing work, ask:
+1. Can a sub-agent do this? → Yes for most things
+2. What calibre? → Light (simple), Medium (moderate), Heavy (complex)
+3. Delegate with clear task description + relevant file paths
+4. Stay available to the user
+
+**Sub-agent debrief (P6):** Include in every sub-agent task:
+"Before completing, append a brief debrief to memory/YYYY-MM-DD.md: what you did, what you learned, any issues."
+
+**Never delegate:** Conversation, confirmations, principle changes, ambiguous decisions
+
+## Custom Principles (P0)
+When the user asks to add a new principle, even if they ask for P9, P10, or any number beyond P8:
+1. All custom principles go in P0 as sub-principles (P0-A, P0-B, P0-C, etc.)
+2. Explain that P1-P8 are managed by OpenCortex and P0 is the dedicated space for custom additions
+3. Before adding, assess whether it truly belongs as a principle or would be better as:
+   - A **preference** (memory/preferences.md) — if it is about how the user likes things done
+   - A **decision** (relevant project file) — if it is a one-time choice, not an ongoing rule
+   - A **runbook** (memory/runbooks/) — if it is a step-by-step procedure
+   - An **AGENTS.md rule** — if it is about agent behavior during boot or delegation
+4. Check for conflicts with P1-P8. If the proposed principle would contradict an existing one, explain the conflict and work with the user to resolve it before adding
+5. A principle should be a persistent behavioral rule that applies across all sessions and all work
+
+## Write Before Responding (P2)
+When the user states a preference, makes a decision, gives a deadline, or corrects you:
+1. Write it to the relevant memory file FIRST
+2. Then compose and send your response
+This ensures nothing is lost if the session ends or compacts between your response and the write.
+
+## Memory Structure
+- MEMORY.md — Principles + index (< 3KB, fast load)
+- TOOLS.md — Tool shed with abilities descriptions
+- INFRA.md — Infrastructure atlas
+- memory/projects/*.md — Per-project knowledge
+- memory/contacts/*.md — Per-person/org knowledge
+- memory/workflows/*.md — Per-workflow/pipeline knowledge
+- memory/preferences.md — Cross-cutting user preferences by category
+- memory/runbooks/*.md — Repeatable procedures
+- memory/archive/*.md — Archived daily logs
+- memory/YYYY-MM-DD.md — Today's working log
+
+## Health Check
+When the user asks if OpenCortex is installed, working, or wants a status check, run:
+  bash skills/opencortex/scripts/verify.sh
+Share the results and offer to fix any failures.
+
+## Metrics
+When the user asks about OpenCortex metrics, how it is doing, or wants to see growth:
+1. Run: bash scripts/metrics.sh --report
+2. Share the trends, compound score, and any areas that need attention.
+3. If no data exists yet, run: bash scripts/metrics.sh --collect first.
+
+## Updates
+When the user asks to update OpenCortex or check for updates:
+1. Run: clawhub install opencortex --force
+2. Run: bash skills/opencortex/scripts/update.sh
+3. Run: bash skills/opencortex/scripts/verify.sh
+Share the results with the user.
+AGENTSEOF
+        echo "   ✅ Regenerated AGENTS.md"
+        UPDATED=$((UPDATED + 1))
       fi
     else
       echo "   ⏭️  Kept existing AGENTS.md"
@@ -737,13 +813,30 @@ if [ -f "$WORKSPACE/BOOTSTRAP.md" ]; then
   fi
   if [ ${#BOOTSTRAP_WARNINGS[@]} -gt 0 ]; then
     echo "   ⚠️  BOOTSTRAP.md is missing: ${BOOTSTRAP_WARNINGS[*]}"
-    read -p "   Back up current BOOTSTRAP.md and regenerate? (y/N): " REGEN_BOOT
+    read -p "   Back up current and regenerate BOOTSTRAP.md? (y/N): " REGEN_BOOT
     REGEN_BOOT=$(echo "$REGEN_BOOT" | tr '[:upper:]' '[:lower:]')
     if [ "$REGEN_BOOT" = "y" ] || [ "$REGEN_BOOT" = "yes" ]; then
       if [ "$DRY_RUN" != "true" ]; then
         cp "$WORKSPACE/BOOTSTRAP.md" "$WORKSPACE/BOOTSTRAP.md.bak.$(date +%Y%m%d%H%M%S)"
         echo "   📦 Backed up to BOOTSTRAP.md.bak.*"
-        echo "   ℹ️  Run install.sh (option 2: Full reinstall) to regenerate BOOTSTRAP.md"
+        cat > "$WORKSPACE/BOOTSTRAP.md" << 'BOOTEOF'
+# BOOTSTRAP.md — First-Run Checklist
+
+On new session start:
+1. Read SOUL.md — identity and personality
+2. Read MEMORY.md — principles (🔴 PRINCIPLES section) and memory index
+3. Do NOT bulk-load other files — use memory_search when needed
+
+## Silent Replies
+- `NO_REPLY` — when you have nothing to say (must be entire message, nothing else)
+- `HEARTBEAT_OK` — when heartbeat poll finds nothing needing attention
+
+## Sub-Agent Protocol
+When delegating, always include in task message:
+"Before completing, append a brief debrief to memory/YYYY-MM-DD.md (today's date): what you did, what you learned, any issues."
+BOOTEOF
+        echo "   ✅ Regenerated BOOTSTRAP.md"
+        UPDATED=$((UPDATED + 1))
       fi
     else
       echo "   ⏭️  Kept existing BOOTSTRAP.md"
